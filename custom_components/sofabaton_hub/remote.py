@@ -54,6 +54,8 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         self._attr_unique_id = f"{entry.unique_id}_remote"
         # Set entity name
         self._attr_name = entry.title
+        # Set entity icon
+        self._attr_icon = "mdi:remote"
         # Set device info so entity is associated with correct device
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self.entry.unique_id)},

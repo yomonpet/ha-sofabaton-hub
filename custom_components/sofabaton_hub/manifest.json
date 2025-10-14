@@ -9,5 +9,6 @@
   "issue_tracker": "https://github.com/yomonpet/sofabaton_hub/issues",
   "requirements": [],
   "version": "1.0.0",
-  "zeroconf": ["_sofabaton_hub._udp.local."]
+  "zeroconf": ["_sofabaton_hub._udp.local."],
+  "integration_type": "device"
 }
