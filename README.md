@@ -20,16 +20,52 @@ This is a custom integration for Home Assistant that allows you to control your 
 
 ---
 
-### � Quick Start
+### ⚙️ Prerequisites
 
-1. **Install the integration** (via HACS or manually)
-2. **Restart Home Assistant**
-3. **Wait for auto-discovery** or add manually via Settings → Integrations
-4. **Configure MQTT connection** (host, port, credentials)
-5. **Add Lovelace cards** to your dashboard
-6. **Start controlling your devices!**
+Before installing this integration, you **must** have an MQTT broker running in your Home Assistant setup.
 
-**Typical Setup Time**: 5-10 minutes
+#### Install Mosquitto Broker Add-on
+
+1. **Go to Settings** → **Add-ons** → **Add-on Store**
+2. **Search for "Mosquitto broker"**
+3. **Click "Install"**
+4. **After installation**, go to the **Configuration** tab:
+   - Set a username and password (optional but recommended)
+   - Example configuration:
+     ```yaml
+     logins:
+       - username: mqtt_user
+         password: your_secure_password
+     ```
+5. **Click "Save"**
+6. **Go to the Info tab** and click **"Start"**
+7. **Enable "Start on boot"** and **"Watchdog"**
+
+#### Configure MQTT Integration
+
+1. **Go to Settings** → **Devices & Services** → **Integrations**
+2. **Search for "MQTT"** and add it
+3. **Configure**:
+   - Broker: `localhost` (or your MQTT broker IP)
+   - Port: `1883`
+   - Username: (the one you set in Mosquitto)
+   - Password: (the one you set in Mosquitto)
+
+**Note**: The Sofabaton Hub communicates with Home Assistant via MQTT. Without a working MQTT broker, this integration will not function.
+
+---
+
+### 🚀 Quick Start
+
+1. **Install Mosquitto broker** (see Prerequisites above)
+2. **Install the integration** (via HACS or manually)
+3. **Restart Home Assistant**
+4. **Wait for auto-discovery** or add manually via Settings → Integrations
+5. **Configure MQTT connection** (use the same credentials as your MQTT integration)
+6. **Add Lovelace cards** to your dashboard
+7. **Start controlling your devices!**
+
+**Typical Setup Time**: 10-15 minutes (including MQTT setup)
 
 ---
 
@@ -76,13 +112,19 @@ This is a custom integration for Home Assistant that allows you to control your 
 
 ### 🔧 Configuration
 
+**Important**: Make sure you have completed the [Prerequisites](#️-prerequisites) section and have a working MQTT broker before proceeding.
+
 #### Automatic Discovery (Recommended)
 
 1. Make sure your Sofabaton Hub is connected to the same network as Home Assistant
 2. Go to **Settings** → **Devices & Services** → **Integrations**
 3. You should see a "Discovered" notification for Sofabaton Hub
 4. Click **"Configure"** and follow the setup wizard
-5. Enter your MQTT broker credentials (if required)
+5. Enter your MQTT broker credentials:
+   - **MQTT Host**: `localhost` (if using Mosquitto add-on) or your broker's IP
+   - **MQTT Port**: `1883` (default)
+   - **Username**: The username you set in Mosquitto broker
+   - **Password**: The password you set in Mosquitto broker
 
 #### Manual Configuration
 
@@ -94,10 +136,12 @@ If automatic discovery doesn't work, you can add the integration manually:
 4. Enter the following information:
    - **MAC Address**: Your Sofabaton Hub's MAC address (e.g., `AA:BB:CC:DD:EE:FF`)
    - **Name**: A friendly name for your hub (default: "Sofabaton Hub")
-   - **MQTT Host**: Your MQTT broker's IP address or hostname
-   - **MQTT Port**: MQTT broker port (default: 1883)
-   - **Username**: MQTT username (optional)
-   - **Password**: MQTT password (optional)
+   - **MQTT Host**: `localhost` (if using Mosquitto add-on) or your broker's IP
+   - **MQTT Port**: `1883` (default)
+   - **Username**: The username you set in Mosquitto broker
+   - **Password**: The password you set in Mosquitto broker
+
+**Note**: The MQTT credentials must match the ones you configured in the Mosquitto broker add-on.
 
 ---
 
@@ -518,6 +562,41 @@ This project is licensed under the MIT License.
 
 ---
 
+### ⚙️ 前置条件
+
+在安装此集成之前，您**必须**在 Home Assistant 中运行 MQTT 代理服务器。
+
+#### 安装 Mosquitto Broker 加载项
+
+1. **进入设置** → **加载项** → **加载项商店**
+2. **搜索 "Mosquitto broker"**
+3. **点击"安装"**
+4. **安装完成后**，进入**配置**选项卡：
+   - 设置用户名和密码（可选但推荐）
+   - 配置示例：
+     ```yaml
+     logins:
+       - username: mqtt_user
+         password: your_secure_password
+     ```
+5. **点击"保存"**
+6. **进入信息选项卡**，点击**"启动"**
+7. **启用"开机启动"**和**"看门狗"**
+
+#### 配置 MQTT 集成
+
+1. **进入设置** → **设备与服务** → **集成**
+2. **搜索 "MQTT"** 并添加
+3. **配置**：
+   - 代理：`localhost`（或您的 MQTT 代理 IP）
+   - 端口：`1883`
+   - 用户名：（您在 Mosquitto 中设置的用户名）
+   - 密码：（您在 Mosquitto 中设置的密码）
+
+**注意**：Sofabaton Hub 通过 MQTT 与 Home Assistant 通信。没有正常工作的 MQTT 代理，此集成将无法运行。
+
+---
+
 ### 📦 安装
 
 #### 方法 1：HACS（推荐）
@@ -543,13 +622,19 @@ This project is licensed under the MIT License.
 
 ### 🔧 配置
 
+**重要**：在继续之前，请确保您已完成[前置条件](#️-前置条件)部分，并拥有正常工作的 MQTT 代理。
+
 #### 自动发现（推荐）
 
 1. 确保您的 Sofabaton Hub 与 Home Assistant 连接到同一网络
 2. 进入 **设置** → **设备与服务** → **集成**
 3. 您应该会看到 Sofabaton Hub 的"已发现"通知
 4. 点击 **"配置"** 并按照设置向导操作
-5. 输入您的 MQTT 代理凭据（如果需要）
+5. 输入您的 MQTT 代理凭据：
+   - **MQTT 主机**：`localhost`（如果使用 Mosquitto 加载项）或您的代理 IP
+   - **MQTT 端口**：`1883`（默认）
+   - **用户名**：您在 Mosquitto 代理中设置的用户名
+   - **密码**：您在 Mosquitto 代理中设置的密码
 
 #### 手动配置
 
@@ -561,10 +646,12 @@ This project is licensed under the MIT License.
 4. 输入以下信息：
    - **MAC 地址**：您的 Sofabaton Hub 的 MAC 地址（例如：`AA:BB:CC:DD:EE:FF`）
    - **名称**：Hub 的友好名称（默认："Sofabaton Hub"）
-   - **MQTT 主机**：您的 MQTT 代理的 IP 地址或主机名
-   - **MQTT 端口**：MQTT 代理端口（默认：1883）
-   - **用户名**：MQTT 用户名（可选）
-   - **密码**：MQTT 密码（可选）
+   - **MQTT 主机**：`localhost`（如果使用 Mosquitto 加载项）或您的代理 IP
+   - **MQTT 端口**：`1883`（默认）
+   - **用户名**：您在 Mosquitto 代理中设置的用户名
+   - **密码**：您在 Mosquitto 代理中设置的密码
+
+**注意**：MQTT 凭据必须与您在 Mosquitto 代理加载项中配置的凭据匹配。
 
 ---
 
