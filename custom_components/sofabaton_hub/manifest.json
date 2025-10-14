@@ -1,0 +1,13 @@
+{
+  "domain": "sofabaton_hub",
+  "name": "Sofabaton Hub",
+  "codeowners": ["@yomonpet"],
+  "config_flow": true,
+  "dependencies": ["mqtt"],
+  "documentation": "https://github.com/waimao/sofabaton_hub",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/waimao/sofabaton_hub/issues",
+  "requirements": [],
+  "version": "1.0.0",
+  "zeroconf": ["_sofabaton_hub._udp.local."]
+}

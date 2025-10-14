@@ -1,0 +1,8 @@
+{
+  "name": "Sofabaton Hub",
+  "render_readme": true,
+  "domains": ["remote"],
+  "iot_class": "Local Push",
+  "homeassistant": "2023.1.0"
+}
+

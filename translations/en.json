@@ -1,0 +1,38 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Set up Sofabaton Hub",
+                "description": "Enter the MAC address of your Hub and your MQTT server details.",
+                "data": {
+                    "mac": "MAC Address (e.g., AABBCCDDEEFF)",
+                    "name": "Hub Name",
+                    "host": "MQTT Broker Host",
+                    "port": "MQTT Broker Port",
+                    "username": "MQTT Username (Optional)",
+                    "password": "MQTT Password (Optional)"
+                }
+            },
+            "zeroconf": {
+                "title": "Discovered Sofabaton Hub",
+                "description": "A Sofabaton Hub was found on your network. Please provide MQTT broker details to complete the setup.",
+                "data": {
+                    "host": "MQTT Broker Host",
+                    "port": "MQTT Broker Port",
+                    "username": "MQTT Username (Optional)",
+                    "password": "MQTT Password (Optional)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to MQTT broker. Please check that the MQTT integration is configured and connected.",
+            "invalid_auth": "Invalid authentication credentials for MQTT broker.",
+            "invalid_mac": "Invalid MAC address format. It should be 12 hex characters without separators.",
+            "unknown": "Unexpected error occurred. Please check the logs for more information."
+        },
+        "abort": {
+            "already_configured": "This Sofabaton Hub is already configured.",
+            "no_mac_address": "No MAC address found in discovery information."
+        }
+    }
+}
