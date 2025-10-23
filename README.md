@@ -10,6 +10,12 @@
 
 This is a custom integration for Home Assistant that allows you to control your Sofabaton Hub remote control. It provides a beautiful, feature-rich interface with real-time updates via MQTT.
 
+> **⚠️ Device Compatibility**
+>
+> This integration is designed for **Sofabaton X2** only.
+>
+> **NOT compatible with Sofabaton X1s** (older model).
+
 **Key Features:**
 - 🔍 **Automatic Discovery**: Automatically discovers Sofabaton Hub devices on your network via mDNS/Zeroconf
 - 🎮 **Activity Control**: Switch between activities, view and control all assigned keys
@@ -551,6 +557,12 @@ This project is licensed under the MIT License.
 ### 📖 概述
 
 这是一个 Home Assistant 自定义集成，允许您控制 Sofabaton Hub 万能遥控器。它提供了一个美观、功能丰富的界面，通过 MQTT 实现实时更新。
+
+> **⚠️ 设备兼容性**
+>
+> 此集成仅适用于 **Sofabaton X2**。
+>
+> **不支持 Sofabaton X1s**（旧型号）。
 
 **主要功能：**
 - 🔍 **自动发现**：通过 mDNS/Zeroconf 自动发现网络上的 Sofabaton Hub 设备

@@ -77,11 +77,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
         # Register frontend modules
+        # Register all JS files to ensure proper loading order
+        # Also defined in manifest.json for compatibility
         from homeassistant.components import frontend  # pylint: disable=import-outside-toplevel
 
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js")
+        # Register main card and detail card as ES6 modules first
         frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js")
         frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js")
+        # Then register the cards.js for Lovelace picker
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js")
 
         _LOGGER.info("Successfully registered Sofabaton Hub frontend cards")
     except Exception as err:  # pylint: disable=broad-except
