@@ -3,24 +3,36 @@
         "step": {
             "user": {
                 "title": "Set up Sofabaton Hub",
-                "description": "Enter the MAC address of your Hub and your MQTT server details.",
+                "description": "Enter the MAC address of your Hub and your MQTT Broker connection details. The MQTT Broker is typically the Mosquitto add-on in Home Assistant.",
                 "data": {
                     "mac": "MAC Address (e.g., AABBCCDDEEFF)",
                     "name": "Hub Name",
-                    "host": "MQTT Broker Host",
-                    "port": "MQTT Broker Port",
-                    "username": "MQTT Username (Optional)",
-                    "password": "MQTT Password (Optional)"
+                    "host": "MQTT Broker IP Address (e.g., localhost or 192.168.1.100)",
+                    "port": "MQTT Broker Port (default: 1883)",
+                    "username": "MQTT Broker Username (Optional)",
+                    "password": "MQTT Broker Password (Optional)"
+                },
+                "data_description": {
+                    "host": "IP address or hostname of your MQTT broker (usually 'localhost' if using Mosquitto add-on)",
+                    "port": "Port number of your MQTT broker (default is 1883)",
+                    "username": "Username for MQTT broker authentication (leave empty if not required)",
+                    "password": "Password for MQTT broker authentication (leave empty if not required)"
                 }
             },
-            "zeroconf": {
-                "title": "Discovered Sofabaton Hub",
-                "description": "A Sofabaton Hub was found on your network. Please provide MQTT broker details to complete the setup.",
+            "zeroconf_confirm": {
+                "title": "Discovered Sofabaton Hub: {name}",
+                "description": "A Sofabaton Hub was found on your network. Please provide your MQTT Broker connection details to complete the setup. The MQTT Broker is typically the Mosquitto add-on in Home Assistant.",
                 "data": {
-                    "host": "MQTT Broker Host",
-                    "port": "MQTT Broker Port",
-                    "username": "MQTT Username (Optional)",
-                    "password": "MQTT Password (Optional)"
+                    "host": "MQTT Broker IP Address (e.g., localhost or 192.168.1.100)",
+                    "port": "MQTT Broker Port (default: 1883)",
+                    "username": "MQTT Broker Username (Optional)",
+                    "password": "MQTT Broker Password (Optional)"
+                },
+                "data_description": {
+                    "host": "IP address or hostname of your MQTT broker (usually 'localhost' if using Mosquitto add-on)",
+                    "port": "Port number of your MQTT broker (default is 1883)",
+                    "username": "Username for MQTT broker authentication (leave empty if not required)",
+                    "password": "Password for MQTT broker authentication (leave empty if not required)"
                 }
             }
         },

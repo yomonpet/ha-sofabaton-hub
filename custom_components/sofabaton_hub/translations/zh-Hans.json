@@ -3,24 +3,36 @@
         "step": {
             "user": {
                 "title": "设置 Sofabaton Hub",
-                "description": "请输入您的 Hub 的 MAC 地址和 MQTT 服务器详细信息。",
+                "description": "请输入您的 Hub 的 MAC 地址和 MQTT Broker 连接信息。MQTT Broker 通常是 Home Assistant 中的 Mosquitto 插件。",
                 "data": {
                     "mac": "MAC 地址 (例如: AABBCCDDEEFF)",
                     "name": "Hub 名称",
-                    "host": "MQTT Broker 主机",
-                    "port": "MQTT Broker 端口",
-                    "username": "MQTT 用户名 (可选)",
-                    "password": "MQTT 密码 (可选)"
+                    "host": "MQTT Broker IP 地址 (例如: localhost 或 192.168.1.100)",
+                    "port": "MQTT Broker 端口 (默认: 1883)",
+                    "username": "MQTT Broker 用户名 (可选)",
+                    "password": "MQTT Broker 密码 (可选)"
+                },
+                "data_description": {
+                    "host": "MQTT Broker 的 IP 地址或主机名（如果使用 Mosquitto 插件，通常填写 'localhost'）",
+                    "port": "MQTT Broker 的端口号（默认为 1883）",
+                    "username": "MQTT Broker 的认证用户名（如果不需要认证可留空）",
+                    "password": "MQTT Broker 的认证密码（如果不需要认证可留空）"
                 }
             },
-            "zeroconf": {
-                "title": "发现 Sofabaton Hub",
-                "description": "在您的网络上发现了一个 Sofabaton Hub。请输入 MQTT Broker 的详细信息以完成设置。",
+            "zeroconf_confirm": {
+                "title": "发现 Sofabaton Hub: {name}",
+                "description": "在您的网络上发现了一个 Sofabaton Hub。请输入您的 MQTT Broker 连接信息以完成设置。MQTT Broker 通常是 Home Assistant 中的 Mosquitto 插件。",
                 "data": {
-                    "host": "MQTT Broker 主机",
-                    "port": "MQTT Broker 端口",
-                    "username": "MQTT 用户名 (可选)",
-                    "password": "MQTT 密码 (可选)"
+                    "host": "MQTT Broker IP 地址 (例如: localhost 或 192.168.1.100)",
+                    "port": "MQTT Broker 端口 (默认: 1883)",
+                    "username": "MQTT Broker 用户名 (可选)",
+                    "password": "MQTT Broker 密码 (可选)"
+                },
+                "data_description": {
+                    "host": "MQTT Broker 的 IP 地址或主机名（如果使用 Mosquitto 插件，通常填写 'localhost'）",
+                    "port": "MQTT Broker 的端口号（默认为 1883）",
+                    "username": "MQTT Broker 的认证用户名（如果不需要认证可留空）",
+                    "password": "MQTT Broker 的认证密码（如果不需要认证可留空）"
                 }
             }
         },
