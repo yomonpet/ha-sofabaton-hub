@@ -219,6 +219,24 @@ class SofabatonHubApiClient:
         payload = {"data": {"activity_id": activity_id, "state": state}}
         await self._publish(TOPIC_ACTIVITY_CONTROL_DOWN, payload)
 
+    async def async_start_activity(self, activity_id: int) -> None:
+        """Start an activity (convenience wrapper for switch entity).
+
+        Args:
+            activity_id: Activity ID to start
+        """
+        _LOGGER.info("Starting activity %s", activity_id)
+        await self.async_control_activity_state(activity_id, "on")
+
+    async def async_stop_activity(self, activity_id: int) -> None:
+        """Stop an activity (convenience wrapper for switch entity).
+
+        Args:
+            activity_id: Activity ID to stop
+        """
+        _LOGGER.info("Stopping activity %s", activity_id)
+        await self.async_control_activity_state(activity_id, "off")
+
     async def async_send_assigned_key(self, activity_id: int, key_id: int) -> None:
         """Publish command to send Activity assigned key.
 
@@ -244,14 +262,18 @@ class SofabatonHubApiClient:
         payload = {"data": {"activity_id": activity_id, "key_id": key_id}}
         await self._publish(TOPIC_ACTIVITY_MACRO_KEY_CONTROL, payload)
 
-    async def async_send_favorite_key(self, activity_id: int, key_id: int) -> None:
+    async def async_send_favorite_key(self, device_id: int, key_id: int) -> None:
         """Publish command to send Activity favorite command.
 
+        Note: Due to firmware design issue, the device expects device_id in the
+        activity_id field for favorite key control commands.
+
         Args:
-            activity_id: Activity ID
+            device_id: Device ID (will be sent as activity_id due to firmware issue)
             key_id: Favorite key ID to send
         """
-        payload = {"data": {"activity_id": activity_id, "key_id": key_id}}
+        # Firmware expects device_id in activity_id field
+        payload = {"data": {"activity_id": device_id, "key_id": key_id}}
         await self._publish(TOPIC_ACTIVITY_FAVORITES_CONTROL, payload)
 
     # DEVICE_DISABLED: Device functionality temporarily disabled

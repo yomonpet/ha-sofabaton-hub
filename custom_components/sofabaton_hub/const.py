@@ -5,7 +5,7 @@ from __future__ import annotations
 DOMAIN = "sofabaton_hub"
 
 # Platforms
-PLATFORMS = ["remote"]
+PLATFORMS = ["remote", "switch"]
 
 # Default Hub name
 DEFAULT_NAME = "Sofabaton Hub"

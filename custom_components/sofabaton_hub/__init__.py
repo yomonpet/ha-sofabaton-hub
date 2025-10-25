@@ -49,7 +49,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = SofabatonHubDataUpdateCoordinator(hass, api_client, entry)
 
     # Store coordinator instance for platforms and other components to access
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    hass.data[DOMAIN][entry.entry_id] = {
+        "coordinator": coordinator,
+        "api_client": api_client,
+    }
 
     # First data refresh (before subscribing to MQTT topics to avoid receiving messages before data initialization)
     await coordinator.async_config_entry_first_refresh()
