@@ -29,7 +29,7 @@ async def async_setup_entry(
         async_add_entities: Callback to add entities
     """
     # Get coordinator instance from hass.data
-    coordinator: SofabatonHubDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: SofabatonHubDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     # Create entity and add to HA
     async_add_entities([SofabatonHubRemote(coordinator, entry)])
 
@@ -172,6 +172,8 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         if current_activity_id:
             # Send stop command, use 0xFF to stop all
             await self.coordinator.api_client.async_control_activity_state(0xFF, "off")
+            # Request basic data to update activity states in frontend
+            await self.coordinator.async_request_basic_data()
 
     async def async_send_command(self, command: Iterable[str], **kwargs: Any) -> None:
         """Send a command to the device.
@@ -213,9 +215,13 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         if cmd_type == "start_activity":
             _LOGGER.info("Backend: Starting activity %s", cmd_dict["activity_id"])
             await api.async_control_activity_state(cmd_dict["activity_id"], "on")
+            # Request basic data to update activity states in frontend
+            await self.coordinator.async_request_basic_data()
         elif cmd_type == "stop_activity":
             _LOGGER.info("Backend: Stopping activity %s", cmd_dict["activity_id"])
             await api.async_control_activity_state(cmd_dict["activity_id"], "off")
+            # Request basic data to update activity states in frontend
+            await self.coordinator.async_request_basic_data()
         elif cmd_type == "request_assigned_keys":
             # Request assigned_keys (page 1)
             activity_id = cmd_dict.get("activity_id")
@@ -242,12 +248,23 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
                 _LOGGER.error("Backend: No activity_id provided for request_favorite_keys command")
         elif cmd_type == "request_basic_data":
             # Request basic data (activity list and device list)
-            await self.coordinator.async_request_basic_data(force_refresh=True)
+            # Note: If request is already in progress, this will be skipped
+            await self.coordinator.async_request_basic_data()
         elif cmd_type == "clear_requesting_keys_flag":
             # Clear key request flag to allow activity_list updates
             _LOGGER.info("Backend: Clearing _is_requesting_keys flag (detail dialog closed)")
             if hasattr(self.coordinator, "_is_requesting_keys"):
                 self.coordinator._is_requesting_keys = False
+
+            # Clear all keys cache to force fresh data on next dialog open
+            _LOGGER.info("Backend: Clearing all keys cache (detail dialog closed)")
+            self.coordinator.data["keys"]["assigned"] = {}
+            self.coordinator.data["keys"]["macros"] = {}
+            self.coordinator.data["keys"]["favorites"] = {}
+
+            # Notify frontend that state has been updated
+            import copy
+            self.coordinator.async_set_updated_data(copy.deepcopy(self.coordinator.data))
         # DEVICE_DISABLED: Device functionality temporarily disabled
         # Uncomment below when re-enabling device support
         # elif cmd_type == "request_device_keys":
@@ -260,7 +277,11 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         elif cmd_type == "send_macro_key":
             await api.async_send_macro_key(cmd_dict["activity_id"], cmd_dict["key_id"])
         elif cmd_type == "send_favorite_key":
-            await api.async_send_favorite_key(cmd_dict["activity_id"], cmd_dict["key_id"])
+            # Note: Due to firmware design issue, device expects device_id in activity_id field
+            device_id = cmd_dict.get("device_id")
+            key_id = cmd_dict.get("key_id")
+            _LOGGER.info("Backend: Sending favorite key - device_id: %s, key_id: %s", device_id, key_id)
+            await api.async_send_favorite_key(device_id, key_id)
         # DEVICE_DISABLED: Device functionality temporarily disabled
         # Uncomment below when re-enabling device support
         # elif cmd_type == "send_device_key":

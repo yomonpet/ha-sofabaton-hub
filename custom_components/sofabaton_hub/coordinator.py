@@ -133,16 +133,47 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         # Use sequential request mechanism to get basic data
         await self.async_request_basic_data()
 
+        # Wait for activity list to be populated (with timeout)
+        max_wait = 10  # Maximum wait time in seconds
+        wait_interval = 0.5  # Check every 0.5 seconds
+        elapsed = 0
+
+        while elapsed < max_wait:
+            if self.data and self.data.get("activities"):
+                _LOGGER.info(
+                    "Activity list received for %s (%d activities) after %.1f seconds",
+                    self.mac,
+                    len(self.data.get("activities", {})),
+                    elapsed,
+                )
+                return
+
+            _LOGGER.debug(
+                "Waiting for activity list... (elapsed: %.1fs, data: %s)",
+                elapsed,
+                "None" if self.data is None else f"activities={len(self.data.get('activities', {}))}",
+            )
+            await asyncio.sleep(wait_interval)
+            elapsed += wait_interval
+
+        _LOGGER.warning(
+            "Timeout waiting for activity list for %s (waited %d seconds)",
+            self.mac,
+            max_wait,
+        )
+
     # Basic data sequential request
-    async def async_request_basic_data(self, force_refresh: bool = False) -> None:
+    async def async_request_basic_data(self) -> None:
         """Request basic data sequentially (activity_list → device_list).
 
         Note: DEVICE_DISABLED - currently only requests activity_list
 
-        Args:
-            force_refresh: Force refresh even if request is in progress
+        This method will skip the request if one is already in progress to avoid
+        duplicate MQTT requests and potential data race conditions.
         """
-        if not force_refresh and self._basic_data_request_state:
+        # Only check if request is already in progress
+        # Skip duplicate requests to avoid MQTT message conflicts
+        if self._basic_data_request_state:
             _LOGGER.debug("Basic data request already in progress for %s", self.mac)
             return
 
@@ -554,6 +585,15 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         # Ensure self.data is initialized
         self._ensure_data_initialized()
 
+        # Check if key request is in progress
+        # If yes, we need to be careful not to clear keys data
+        is_requesting_keys = hasattr(self, "_is_requesting_keys") and self._is_requesting_keys
+
+        if is_requesting_keys:
+            _LOGGER.info("Keys request in progress, updating activities without clearing keys data")
+            # Preserve existing keys data
+            existing_keys = copy.deepcopy(self.data["keys"])
+
         self.data["activities"].clear()  # Clear old data
 
         # Reset current_activity_id, will be set if any activity is on
@@ -576,14 +616,13 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         # Trigger next step of basic data sequential request
         self._advance_basic_data_request("activity_list")
 
-        # Check if key request is in progress, defer update to avoid overwriting key data
-        if hasattr(self, "_is_requesting_keys") and self._is_requesting_keys:
-            _LOGGER.info("Keys request in progress, deferring activity_list state update to avoid data race")
-            # Don't update state immediately, wait for key request to complete
-            # Key data will include latest activities data in _handle_favorite_keys
-            return
+        # If key request is in progress, restore keys data before updating state
+        if is_requesting_keys:
+            _LOGGER.info("Restoring keys data after activity_list update")
+            self.data["keys"] = existing_keys
 
-        # Immediately update Home Assistant state to avoid debounce delay overwriting key data
+        # Always update Home Assistant state to ensure frontend receives activity changes
+        # Even if keys request is in progress, we need to update activity states
         data_copy = copy.deepcopy(self.data)
         _LOGGER.info("Sending data update to Home Assistant (activity_list)")
         _LOGGER.debug(
