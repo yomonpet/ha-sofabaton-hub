@@ -684,8 +684,11 @@ class SofabatonDetailCard extends LitElement {
     };
     document.addEventListener("sofabaton-activity-changed", this._activityChangeListener);
 
-    // Request data for current page when dialog opens
-    this._requestKeysForCurrentPage();
+    // Always force refresh when dialog opens to get latest data
+    this._requestKeysForCurrentPage(true);
+
+    // Monitor hass.states changes for debugging
+    this._monitorStateChanges();
 
     // If initial request failed due to missing hass/stateObj, retry after a short delay
     if (!this.hass || !this.stateObj) {
@@ -738,6 +741,13 @@ class SofabatonDetailCard extends LitElement {
       console.log("🧹 Clearing page 3 periodic state check interval");
       clearInterval(this._stateCheckIntervalPage3);
       this._stateCheckIntervalPage3 = null;
+    }
+
+    // Clean up state monitor interval
+    if (this._stateMonitorInterval) {
+      console.log("🧹 Clearing state monitor interval");
+      clearInterval(this._stateMonitorInterval);
+      this._stateMonitorInterval = null;
     }
 
     // Clean up all pending timeouts for all pages
@@ -1017,34 +1027,47 @@ class SofabatonDetailCard extends LitElement {
       console.log("  favorite_keys:", favoriteKeys?.length || 0, "keys");
 
       // Check completion based on current page
+      // Must check both: data exists AND data was updated after request was sent
       let hasResponse = false;
       let keyType = '';
 
       if (this._currentPage === 1) {
-        hasResponse = attributes.assigned_keys && attributes.assigned_keys.hasOwnProperty(effectiveActivityId);
+        const hasData = attributes.assigned_keys && attributes.assigned_keys.hasOwnProperty(effectiveActivityId);
+        const requestTimestamp = this._requestTimestampPage1;
+        const dataUpdatedAfterRequest = requestTimestamp && currentState.last_updated > requestTimestamp;
+        hasResponse = hasData && dataUpdatedAfterRequest;
         keyType = 'assigned_keys';
         console.log(`🔍 Page 1 completion check:`, {
-          'attributes.assigned_keys': attributes.assigned_keys,
-          'effectiveActivityId': effectiveActivityId,
-          'hasOwnProperty': attributes.assigned_keys ? attributes.assigned_keys.hasOwnProperty(effectiveActivityId) : 'N/A',
+          'hasData': hasData,
+          'requestTimestamp': requestTimestamp,
+          'last_updated': currentState.last_updated,
+          'dataUpdatedAfterRequest': dataUpdatedAfterRequest,
           'hasResponse': hasResponse
         });
       } else if (this._currentPage === 2) {
-        hasResponse = attributes.macro_keys && attributes.macro_keys.hasOwnProperty(effectiveActivityId);
+        const hasData = attributes.macro_keys && attributes.macro_keys.hasOwnProperty(effectiveActivityId);
+        const requestTimestamp = this._requestTimestampPage2;
+        const dataUpdatedAfterRequest = requestTimestamp && currentState.last_updated > requestTimestamp;
+        hasResponse = hasData && dataUpdatedAfterRequest;
         keyType = 'macro_keys';
         console.log(`🔍 Page 2 completion check:`, {
-          'attributes.macro_keys': attributes.macro_keys,
-          'effectiveActivityId': effectiveActivityId,
-          'hasOwnProperty': attributes.macro_keys ? attributes.macro_keys.hasOwnProperty(effectiveActivityId) : 'N/A',
+          'hasData': hasData,
+          'requestTimestamp': requestTimestamp,
+          'last_updated': currentState.last_updated,
+          'dataUpdatedAfterRequest': dataUpdatedAfterRequest,
           'hasResponse': hasResponse
         });
       } else if (this._currentPage === 3) {
-        hasResponse = attributes.favorite_keys && attributes.favorite_keys.hasOwnProperty(effectiveActivityId);
+        const hasData = attributes.favorite_keys && attributes.favorite_keys.hasOwnProperty(effectiveActivityId);
+        const requestTimestamp = this._requestTimestampPage3;
+        const dataUpdatedAfterRequest = requestTimestamp && currentState.last_updated > requestTimestamp;
+        hasResponse = hasData && dataUpdatedAfterRequest;
         keyType = 'favorite_keys';
         console.log(`🔍 Page 3 completion check:`, {
-          'attributes.favorite_keys': attributes.favorite_keys,
-          'effectiveActivityId': effectiveActivityId,
-          'hasOwnProperty': attributes.favorite_keys ? attributes.favorite_keys.hasOwnProperty(effectiveActivityId) : 'N/A',
+          'hasData': hasData,
+          'requestTimestamp': requestTimestamp,
+          'last_updated': currentState.last_updated,
+          'dataUpdatedAfterRequest': dataUpdatedAfterRequest,
           'hasResponse': hasResponse
         });
       }
@@ -1080,15 +1103,46 @@ class SofabatonDetailCard extends LitElement {
     }
   }
 
+  // Monitor hass.states changes for debugging
+  _monitorStateChanges() {
+    if (!this.hass || !this.stateObj) {
+      return;
+    }
+
+    const entityId = this.stateObj.entity_id;
+    const initialState = this.hass.states[entityId];
+    const initialLastUpdated = initialState?.last_updated;
+
+    console.log(`🔍 Starting state monitoring for ${entityId}`);
+    console.log(`🔍 Initial last_updated: ${initialLastUpdated}`);
+
+    // Check every 1 second for state changes
+    this._stateMonitorInterval = setInterval(() => {
+      if (this._isDisconnected) {
+        clearInterval(this._stateMonitorInterval);
+        return;
+      }
+
+      const currentState = this.hass.states[entityId];
+      const currentLastUpdated = currentState?.last_updated;
+
+      if (currentLastUpdated !== initialLastUpdated) {
+        console.log(`🎉 STATE CHANGED! last_updated changed from ${initialLastUpdated} to ${currentLastUpdated}`);
+        console.log(`🎉 New assigned_keys:`, currentState.attributes.assigned_keys);
+        clearInterval(this._stateMonitorInterval);
+      }
+    }, 1000);
+  }
+
   // Request key data for current page (on-demand loading)
-  _requestKeysForCurrentPage() {
+  _requestKeysForCurrentPage(forceRefresh = false) {
     // Skip if component is disconnected
     if (this._isDisconnected) {
       console.log("🔍 _requestKeysForCurrentPage - skipping, component is disconnected");
       return;
     }
 
-    console.log("🔍 _requestKeysForCurrentPage called - page:", this._currentPage, "hass:", !!this.hass, "stateObj:", !!this.stateObj);
+    console.log("🔍 _requestKeysForCurrentPage called - page:", this._currentPage, "forceRefresh:", forceRefresh, "hass:", !!this.hass, "stateObj:", !!this.stateObj);
 
     if (!this.hass || !this.stateObj) {
       console.log("❌ Cannot request keys - missing hass or stateObj");
@@ -1130,10 +1184,14 @@ class SofabatonDetailCard extends LitElement {
       console.log(`🔍 Page 3 check - hasData: ${hasData}, favorite_keys:`, attributes.favorite_keys, `effectiveActivityId: ${effectiveActivityId}`);
     }
 
-    // Skip if data already exists for this page
-    if (hasData) {
+    // Skip if data already exists for this page (unless force refresh)
+    if (hasData && !forceRefresh) {
       console.log(`✅ Page ${this._currentPage} data already exists for activity ${effectiveActivityId}, skipping request`);
       return;
+    }
+
+    if (forceRefresh && hasData) {
+      console.log(`🔄 Force refresh - requesting fresh data even though cache exists`);
     }
 
     // Skip if already requesting for this page
@@ -1144,13 +1202,19 @@ class SofabatonDetailCard extends LitElement {
 
     console.log(`🚀 Frontend: Requesting ${requestType} for activity ${effectiveActivityId} (page ${this._currentPage})`);
 
-    // Set requesting state for current page
+    // Set requesting state for current page and record request timestamp
     if (this._currentPage === 1) {
       this._isRequestingPage1 = true;
+      this._requestTimestampPage1 = new Date().toISOString();
+      console.log(`📝 Recording request timestamp for page 1: ${this._requestTimestampPage1}`);
     } else if (this._currentPage === 2) {
       this._isRequestingPage2 = true;
+      this._requestTimestampPage2 = new Date().toISOString();
+      console.log(`📝 Recording request timestamp for page 2: ${this._requestTimestampPage2}`);
     } else if (this._currentPage === 3) {
       this._isRequestingPage3 = true;
+      this._requestTimestampPage3 = new Date().toISOString();
+      console.log(`📝 Recording request timestamp for page 3: ${this._requestTimestampPage3}`);
     }
 
     this.requestUpdate(); // Trigger re-render to show loading state
@@ -1636,7 +1700,7 @@ class SofabatonDetailCard extends LitElement {
         ${favoriteKeys.map(key => html`
           <button
             class="favorite-button"
-            @click=${(e) => this._sendFavoriteKey(keyMatchActivityId, key.id, e)}
+            @click=${(e) => this._sendFavoriteKey(keyMatchActivityId, key.id, key.device_id, e)}
             title="${key.name}"
           >
             ${key.name}
@@ -1709,12 +1773,12 @@ class SofabatonDetailCard extends LitElement {
   }
 
   // Send favorite command
-  _sendFavoriteKey(activityId, keyId, event) {
+  _sendFavoriteKey(activityId, keyId, deviceId, event) {
     if (event) this._addRippleEffect(event);
-    
+
      this.hass.callService("remote", "send_command", {
         entity_id: ensureEntityIdIsString(this.stateObj.entity_id),
-        command: [`type:send_favorite_key`, `activity_id:${activityId}`, `key_id:${keyId}`],
+        command: [`type:send_favorite_key`, `activity_id:${activityId}`, `key_id:${keyId}`, `device_id:${deviceId}`],
     });
   }
 
