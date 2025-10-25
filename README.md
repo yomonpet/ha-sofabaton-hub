@@ -153,7 +153,35 @@ If automatic discovery doesn't work, you can add the integration manually:
 
 ### 🎨 Adding Lovelace Cards
 
-After installation, you need to add the custom cards to your Lovelace dashboard:
+After installation, you need to add the custom cards to your Lovelace dashboard.
+
+> **⚠️ IMPORTANT: You MUST use the custom cards provided by this integration!**
+>
+> **DO NOT** use the default entity card, button card, or any other generic cards. They will not work properly with this integration because:
+> - The custom cards handle complex MQTT communication and state management
+> - They provide the proper UI for activity switching and key control
+> - Generic cards cannot access the custom functionality (key requests, activity switching, etc.)
+
+#### How to Add Cards to Dashboard
+
+**Method 1: Visual Editor (Recommended)**
+
+1. **Go to your dashboard** and click **"Edit Dashboard"** (top right corner)
+2. **Click "+ Add Card"** button
+3. **Scroll down** to the **"Custom cards"** section
+4. **Look for "Custom: Sofabaton Hub"**
+   - Description: "Smart remote control card for managing Sofabaton Hub activities and devices"
+   - If you don't see it, try clearing browser cache (Ctrl+Shift+R or Cmd+Shift+R)
+5. **Click on the card** to add it
+6. **Select your remote entity** from the dropdown (e.g., `remote.sofabaton_hub_aabbccddeeff`)
+7. **Click "Save"**
+
+> **💡 Tip**: The card will automatically register as "Custom: Sofabaton Hub" in the card picker. Both the main card and detail card use the same registration name.
+
+**Method 2: YAML Editor**
+
+1. **Go to your dashboard** and click **"Edit Dashboard"** → **"⋮"** (three dots) → **"Raw configuration editor"**
+2. **Add the following YAML**:
 
 #### Main Card (Activity Switcher)
 
@@ -161,6 +189,13 @@ After installation, you need to add the custom cards to your Lovelace dashboard:
 type: custom:sofabaton-main-card
 entity: remote.sofabaton_hub_aabbccddeeff
 ```
+
+**Features:**
+- Shows all configured activities
+- Toggle switches to activate/deactivate activities
+- Current activity highlighted
+- Refresh button to reload data
+- "More Info" button appears when an activity is running
 
 #### Detail Card (Key Control)
 
@@ -171,7 +206,38 @@ type: custom:sofabaton-detail-card
 entity: remote.sofabaton_hub_aabbccddeeff
 ```
 
+**Features:**
+- Tabbed interface for different key types (Assigned Keys, Macro Keys, Favorite Keys)
+- Visual key buttons with labels
+- Click keys to send commands
+- Loading states during data fetch
+- Ripple effect on key press
+
 **Note**: Replace `aabbccddeeff` with your actual hub's MAC address (lowercase, no separators).
+
+---
+
+#### ❌ Common Mistakes to Avoid
+
+**DON'T do this:**
+```yaml
+# ❌ This will NOT work!
+type: entity
+entity: remote.sofabaton_hub_aabbccddeeff
+```
+
+```yaml
+# ❌ This will NOT work either!
+type: button
+entity: remote.sofabaton_hub_aabbccddeeff
+```
+
+**DO this:**
+```yaml
+# ✅ This is correct!
+type: custom:sofabaton-main-card
+entity: remote.sofabaton_hub_aabbccddeeff
+```
 
 ---
 
@@ -669,7 +735,35 @@ This project is licensed under the MIT License.
 
 ### 🎨 添加 Lovelace 卡片
 
-安装后，您需要将自定义卡片添加到 Lovelace 仪表板：
+安装后，您需要将自定义卡片添加到 Lovelace 仪表板。
+
+> **⚠️ 重要提示：您必须使用此集成提供的自定义卡片！**
+>
+> **不要**使用默认的实体卡片、按钮卡片或任何其他通用卡片。它们无法正常工作，因为：
+> - 自定义卡片处理复杂的 MQTT 通信和状态管理
+> - 它们提供了活动切换和按键控制的专用界面
+> - 通用卡片无法访问自定义功能（按键请求、活动切换等）
+
+#### 如何添加卡片到仪表板
+
+**方法 1：可视化编辑器（推荐）**
+
+1. **进入您的仪表板**，点击右上角的**"编辑仪表板"**
+2. **点击"+ 添加卡片"**按钮
+3. **向下滚动**到**"Custom cards"（自定义卡片）**部分
+4. **查找"Custom: Sofabaton Hub"**
+   - 描述："Smart remote control card for managing Sofabaton Hub activities and devices"
+   - 如果看不到，尝试清除浏览器缓存（Ctrl+Shift+R 或 Cmd+Shift+R）
+5. **点击卡片**添加
+6. **从下拉菜单选择您的遥控器实体**（例如：`remote.sofabaton_hub_aabbccddeeff`）
+7. **点击"保存"**
+
+> **💡 提示**：卡片会自动注册为"Custom: Sofabaton Hub"。主卡片和详情卡片使用相同的注册名称。
+
+**方法 2：YAML 编辑器**
+
+1. **进入您的仪表板**，点击**"编辑仪表板"** → **"⋮"**（三个点）→ **"原始配置编辑器"**
+2. **添加以下 YAML**：
 
 #### 主卡片（活动切换器）
 
@@ -677,6 +771,13 @@ This project is licensed under the MIT License.
 type: custom:sofabaton-main-card
 entity: remote.sofabaton_hub_aabbccddeeff
 ```
+
+**功能：**
+- 显示所有配置的活动
+- 切换开关以激活/停用活动
+- 当前活动高亮显示
+- 刷新按钮重新加载数据
+- 活动运行时显示"更多信息"按钮
 
 #### 详情卡片（按键控制）
 
@@ -687,7 +788,38 @@ type: custom:sofabaton-detail-card
 entity: remote.sofabaton_hub_aabbccddeeff
 ```
 
+**功能：**
+- 不同按键类型的选项卡界面（分配按键、宏按键、收藏按键）
+- 带标签的可视化按键按钮
+- 点击按键发送命令
+- 数据获取期间的加载状态
+- 按键按下时的涟漪效果
+
 **注意**：将 `aabbccddeeff` 替换为您实际 Hub 的 MAC 地址（小写，无分隔符）。
+
+---
+
+#### ❌ 常见错误避免
+
+**不要这样做：**
+```yaml
+# ❌ 这样不行！
+type: entity
+entity: remote.sofabaton_hub_aabbccddeeff
+```
+
+```yaml
+# ❌ 这样也不行！
+type: button
+entity: remote.sofabaton_hub_aabbccddeeff
+```
+
+**要这样做：**
+```yaml
+# ✅ 这样才对！
+type: custom:sofabaton-main-card
+entity: remote.sofabaton_hub_aabbccddeeff
+```
 
 ---
 
