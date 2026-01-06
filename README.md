@@ -503,14 +503,7 @@ A: Yes! You can use this integration in your automations in multiple ways:
    - `remote.turn_off` - Stop current activity
    - `remote.send_command` - Send key commands
 
-   Example - Send a key command:
-   ```yaml
-   service: remote.send_command
-   target:
-     entity_id: remote.sofabaton_hub_aabbccddeeff
-   data:
-     command: "174"  # Key ID
-   ```
+   > ⚠️ **Important**: The `remote.send_command` service is primarily used by the custom Lovelace cards. For most users, **using the custom cards is the recommended approach** rather than calling the service directly.
 
 **Q: Can I trigger automations when a physical key is pressed on the remote?**
 A: Currently, the integration does not support detecting physical key presses from the Sofabaton remote. The integration can only **send** commands to the hub, not **receive** key press events.
@@ -531,12 +524,15 @@ automation:
         target:
           entity_id: remote.sofabaton_hub_aabbccddeeff
         data:
-          command: "174"  # Your key ID
+          command:
+            - "type:send_assigned_key"
+            - "activity_id:1"      # Replace with your activity ID
+            - "key_id:174"         # Replace with your key ID
       # Show notification
       - service: notify.persistent_notification
         data:
-          message: "xxxx"
-          title: "xxxxx"
+          message: "Key sent successfully"
+          title: "Sofabaton Hub"
 ```
 
 To create the helper button:
@@ -544,6 +540,8 @@ To create the helper button:
 2. Click **"+ Create Helper"** → **"Button"**
 3. Name it "Test Sofabaton Key"
 4. Use the entity `input_button.test_sofabaton_key` in your automation
+
+> 💡 **Tip**: If you're not sure about the correct `activity_id` and `key_id`, use the custom Lovelace cards instead - they handle all the details automatically.
 
 **Q: What's the difference between assigned keys, macro keys, and favorite keys?**
 A:
@@ -1150,14 +1148,7 @@ entity: remote.sofabaton_hub_aabbccddeeff
    - `remote.turn_off` - 停止当前活动
    - `remote.send_command` - 发送按键命令
 
-   示例 - 发送按键命令：
-   ```yaml
-   service: remote.send_command
-   target:
-     entity_id: remote.sofabaton_hub_aabbccddeeff
-   data:
-     command: "174"  # 按键 ID
-   ```
+   > ⚠️ **重要提示**：`remote.send_command` 服务主要由自定义 Lovelace 卡片使用。对于大多数用户，**使用自定义卡片是推荐的方法**，而不是直接调用该服务。
 
 **问：当遥控器上的物理按键被按下时，可以触发自动化吗？**
 答：目前，此集成不支持检测 Sofabaton 遥控器上的物理按键按下事件。集成只能**发送**命令到 Hub，不能**接收**按键按下事件。
@@ -1178,12 +1169,15 @@ automation:
         target:
           entity_id: remote.sofabaton_hub_aabbccddeeff
         data:
-          command: "174"  # 您的按键 ID
+          command:
+            - "type:send_assigned_key"
+            - "activity_id:1"      # 替换为您的活动 ID
+            - "key_id:174"         # 替换为您的按键 ID
       # 显示通知
       - service: notify.persistent_notification
         data:
-          message: "xxxx"
-          title: "xxxx
+          message: "按键已成功发送"
+          title: "Sofabaton Hub"
 ```
 
 创建辅助按钮的步骤：
@@ -1191,6 +1185,8 @@ automation:
 2. 点击 **"+ 创建辅助工具"** → **"按钮"**
 3. 命名为"测试 Sofabaton 按键"
 4. 在自动化中使用实体 `input_button.test_sofabaton_key`
+
+> 💡 **提示**：如果您不确定正确的 `activity_id` 和 `key_id`，请改用自定义 Lovelace 卡片 - 它们会自动处理所有细节。
 
 **问：分配按键、宏按键和收藏按键有什么区别？**
 答：
