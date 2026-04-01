@@ -58,11 +58,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "api_client": api_client,
     }
 
-    # First data refresh (before subscribing to MQTT topics to avoid receiving messages before data initialization)
-    await coordinator.async_config_entry_first_refresh()
-
-    # Subscribe to MQTT topics
+    # Subscribe to MQTT topics before requesting data to ensure responses are captured
     await api_client.async_subscribe_to_topics()
+
+    # First data refresh (now that subscriptions are in place)
+    await coordinator.async_config_entry_first_refresh()
 
     # Set up platforms (e.g., remote)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
