@@ -25,6 +25,7 @@ from .const import (
     TOPIC_ACTIVITY_MACRO_KEY_CONTROL,
     TOPIC_ACTIVITY_MACRO_LIST,
     TOPIC_ACTIVITY_MACRO_REQUEST,
+    TOPIC_SUBSCRIPTION_BARRIER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -130,6 +131,9 @@ class SofabatonHubApiClient:
             # Uncomment below when re-enabling device support
             # TOPIC_DEVICE_KEYS_LIST,
             TOPIC_ACTIVITY_MACRO_LIST,
+            # Barrier topic must be last — used by async_verify_subscriptions()
+            # to confirm all preceding subscriptions are active
+            TOPIC_SUBSCRIPTION_BARRIER,
         ]
 
         for topic_template in topics_to_subscribe:
@@ -137,6 +141,50 @@ class SofabatonHubApiClient:
             _LOGGER.info("Subscribing to topic: %s", topic)
             # Subscribe to topic and specify callback function for message arrival
             await mqtt.async_subscribe(self.hass, topic, self._message_received)
+
+    async def async_verify_subscriptions(self) -> None:
+        """Verify MQTT subscriptions are active using a self-loopback barrier.
+
+        Publishes a retained message to the barrier topic and waits for it to
+        arrive back through the subscription. Since all topics are subscribed
+        sequentially and the barrier topic is last, receiving the loopback
+        confirms the broker has processed all subscriptions.
+
+        This must be called after async_subscribe_to_topics() and before
+        setting the coordinator's message callback or publishing any requests.
+        """
+        barrier_topic = self._get_topic(TOPIC_SUBSCRIPTION_BARRIER)
+        barrier_received = asyncio.Event()
+
+        # Temporarily set a barrier callback to detect the loopback.
+        # No coordinator callback is set yet at this point in the startup
+        # sequence, so we own _on_message_callback exclusively.
+        def _barrier_check(topic: str, payload: dict) -> None:
+            if topic == barrier_topic and payload.get("status") == "ready":
+                barrier_received.set()
+
+        self._on_message_callback = _barrier_check
+
+        _LOGGER.debug("Publishing subscription barrier to %s", barrier_topic)
+        await mqtt.async_publish(
+            self.hass,
+            barrier_topic,
+            json.dumps({"status": "ready"}),
+            retain=True,
+        )
+
+        try:
+            async with asyncio.timeout(5.0):
+                await barrier_received.wait()
+            _LOGGER.info("MQTT subscriptions verified via barrier loopback")
+        except TimeoutError:
+            _LOGGER.warning(
+                "MQTT subscription barrier timed out after 5s, proceeding anyway"
+            )
+        finally:
+            # Clear the temporary callback; the coordinator callback will be
+            # set by __init__.py after this method returns.
+            self._on_message_callback = None
 
     # --- Request publishing methods ---
 

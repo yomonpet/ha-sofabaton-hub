@@ -58,10 +58,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "api_client": api_client,
     }
 
-    # Subscribe to MQTT topics before requesting data to ensure responses are captured
+    # Subscribe to MQTT topics and verify subscriptions are active before
+    # publishing any requests. The barrier loopback confirms the broker has
+    # fully processed all subscriptions, preventing the race condition where
+    # a request is published before the response subscription is confirmed.
     await api_client.async_subscribe_to_topics()
+    await api_client.async_verify_subscriptions()
 
-    # First data refresh (now that subscriptions are in place)
+    # Now that subscriptions are verified, set the coordinator's message
+    # callback so incoming MQTT messages are processed.
+    api_client.set_on_message_callback(coordinator._handle_mqtt_message)
+
+    # First data refresh (subscriptions are confirmed active)
     await coordinator.async_config_entry_first_refresh()
 
     # Set up platforms (e.g., remote)
