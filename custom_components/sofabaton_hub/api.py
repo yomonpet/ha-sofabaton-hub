@@ -46,6 +46,7 @@ class SofabatonHubApiClient:
         self.mac: str = entry.data[CONF_MAC]
         self._on_message_callback: Callable[[str, dict[str, Any]], None] | None = None
         self._request_lock = asyncio.Lock()
+        self._barrier_unsub: Callable[[], None] | None = None
 
     def set_on_message_callback(self, func: Callable[[str, dict[str, Any]], None]) -> None:
         """Set callback function to be called when MQTT message is received.
@@ -139,16 +140,22 @@ class SofabatonHubApiClient:
         for topic_template in topics_to_subscribe:
             topic = self._get_topic(topic_template)
             _LOGGER.info("Subscribing to topic: %s", topic)
-            # Subscribe to topic and specify callback function for message arrival
-            await mqtt.async_subscribe(self.hass, topic, self._message_received)
+            unsub = await mqtt.async_subscribe(self.hass, topic, self._message_received)
+            # Keep the barrier unsubscribe callback so we can remove it after
+            # verification — it's only needed during startup.
+            if topic_template == TOPIC_SUBSCRIPTION_BARRIER:
+                self._barrier_unsub = unsub
 
     async def async_verify_subscriptions(self) -> None:
         """Verify MQTT subscriptions are active using a self-loopback barrier.
 
-        Publishes a retained message to the barrier topic and waits for it to
-        arrive back through the subscription. Since all topics are subscribed
+        Publishes a message to the barrier topic and waits for it to arrive
+        back through the subscription. Since all topics are subscribed
         sequentially and the barrier topic is last, receiving the loopback
         confirms the broker has processed all subscriptions.
+
+        After verification, the barrier subscription is removed so it does not
+        generate unexpected messages during normal operation.
 
         This must be called after async_subscribe_to_topics() and before
         setting the coordinator's message callback or publishing any requests.
@@ -165,12 +172,15 @@ class SofabatonHubApiClient:
 
         self._on_message_callback = _barrier_check
 
+        # Clear any previously retained barrier message to avoid stale loopbacks
+        await mqtt.async_publish(self.hass, barrier_topic, "", retain=True)
+
+        # Publish a non-retained barrier message for this verification
         _LOGGER.debug("Publishing subscription barrier to %s", barrier_topic)
         await mqtt.async_publish(
             self.hass,
             barrier_topic,
             json.dumps({"status": "ready"}),
-            retain=True,
         )
 
         try:
@@ -185,6 +195,13 @@ class SofabatonHubApiClient:
             # Clear the temporary callback; the coordinator callback will be
             # set by __init__.py after this method returns.
             self._on_message_callback = None
+
+            # Unsubscribe from the barrier topic — it's only needed during
+            # startup verification and would generate spurious messages if
+            # left active during normal operation.
+            if self._barrier_unsub:
+                self._barrier_unsub()
+                self._barrier_unsub = None
 
     # --- Request publishing methods ---
 
