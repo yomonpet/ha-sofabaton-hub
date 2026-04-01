@@ -149,8 +149,8 @@ def _get_coordinator_state_diagnostics(
     return {
         "last_update_success": coordinator.last_update_success,
         "last_update_time": (
-            coordinator.last_update_success_time.isoformat()
-            if coordinator.last_update_success_time
+            getattr(coordinator, "last_update_success_time", None).isoformat()
+            if getattr(coordinator, "last_update_success_time", None)
             else None
         ),
         "update_interval": (
