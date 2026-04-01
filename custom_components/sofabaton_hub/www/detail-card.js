@@ -1814,7 +1814,7 @@ document.addEventListener("hass-more-info", (e) => {
     console.log("More info requested for entity:", entityId, "selectedActivityId:", selectedActivityId);
     
     // Check if this entity belongs to the Sofabaton Hub integration
-    const isSofabatonHub = checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
+    const isSofabatonHub = entityId?.startsWith("remote.") && checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
     
     if (isSofabatonHub) {
         console.log("Intercepting more-info for Sofabaton Hub:", entityId);
@@ -1850,7 +1850,7 @@ document.addEventListener("hass-more-info", (e) => {
 document.addEventListener("show-dialog", (e) => {
     if (e.detail && e.detail.dialogTag === "ha-more-info-dialog") {
         const entityId = e.detail.dialogParams?.entityId;
-        const isSofabatonHub = checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
+        const isSofabatonHub = entityId?.startsWith("remote.") && checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
         
         if (isSofabatonHub) {
             console.log("Blocking default more-info dialog for:", entityId);
