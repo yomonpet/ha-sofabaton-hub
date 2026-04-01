@@ -672,15 +672,25 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
                 self.data["activities"][activity_id]["state"] = "on"
                 self.data["current_activity_id"] = activity_id
             else:
-                _LOGGER.warning("Received unknown activity_id: %s", activity_id)
+                # Unknown activity_id: the hub says this activity is active, so trust it.
+                # Update current_activity_id immediately so state is correct,
+                # then request the activity list to recover the missing metadata.
+                _LOGGER.warning(
+                    "Received unknown activity_id %s, updating state and requesting activity list",
+                    activity_id,
+                )
+                self.data["current_activity_id"] = activity_id
+                asyncio.create_task(self.async_request_basic_data())
         elif activity_id is not None and state == "off":
             # Individual activity closed (rare case)
             _LOGGER.info("Individual activity %s turned off", activity_id)
             if activity_id in self.data["activities"]:
                 self.data["activities"][activity_id]["state"] = "off"
-                # If closing current activity, clear current_activity_id
-                if self.data["current_activity_id"] == activity_id:
-                    self.data["current_activity_id"] = None
+            # If closing current activity, clear current_activity_id
+            # (check regardless of whether activity is in our list — it may have been
+            # set by a previous push for an unknown activity_id)
+            if self.data["current_activity_id"] == activity_id:
+                self.data["current_activity_id"] = None
         else:
             _LOGGER.warning("Unhandled activity status: activity_id=%s, state=%s", activity_id, state)
 

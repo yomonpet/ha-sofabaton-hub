@@ -247,11 +247,7 @@ class SofabatonActivitySwitch(CoordinatorEntity, SwitchEntity):
         try:
             await self.coordinator.api_client.async_start_activity(self._activity_id)
             _LOGGER.info("Successfully sent start command for activity %s", self._activity_id)
-
-            # Request basic data to update activity states
-            # This will trigger MQTT request and update the coordinator data
-            # Note: If request is already in progress, this will be skipped
-            await self.coordinator.async_request_basic_data()
+            # State will be updated when the hub pushes activity status via MQTT
 
         except Exception as err:
             _LOGGER.error(
@@ -272,11 +268,7 @@ class SofabatonActivitySwitch(CoordinatorEntity, SwitchEntity):
         try:
             await self.coordinator.api_client.async_stop_activity(self._activity_id)
             _LOGGER.info("Successfully sent stop command for activity %s", self._activity_id)
-
-            # Request basic data to update activity states
-            # This will trigger MQTT request and update the coordinator data
-            # Note: If request is already in progress, this will be skipped
-            await self.coordinator.async_request_basic_data()
+            # State will be updated when the hub pushes activity status via MQTT
 
         except Exception as err:
             _LOGGER.error(

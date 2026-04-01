@@ -172,8 +172,7 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         if current_activity_id:
             # Send stop command, use 0xFF to stop all
             await self.coordinator.api_client.async_control_activity_state(0xFF, "off")
-            # Request basic data to update activity states in frontend
-            await self.coordinator.async_request_basic_data()
+            # State will be updated when the hub pushes activity status via MQTT
 
     async def async_send_command(self, command: Iterable[str], **kwargs: Any) -> None:
         """Send a command to the device.
@@ -215,13 +214,11 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         if cmd_type == "start_activity":
             _LOGGER.info("Backend: Starting activity %s", cmd_dict["activity_id"])
             await api.async_control_activity_state(cmd_dict["activity_id"], "on")
-            # Request basic data to update activity states in frontend
-            await self.coordinator.async_request_basic_data()
+            # State will be updated when the hub pushes activity status via MQTT
         elif cmd_type == "stop_activity":
             _LOGGER.info("Backend: Stopping activity %s", cmd_dict["activity_id"])
             await api.async_control_activity_state(cmd_dict["activity_id"], "off")
-            # Request basic data to update activity states in frontend
-            await self.coordinator.async_request_basic_data()
+            # State will be updated when the hub pushes activity status via MQTT
         elif cmd_type == "request_assigned_keys":
             # Request assigned_keys (page 1)
             activity_id = cmd_dict.get("activity_id")
