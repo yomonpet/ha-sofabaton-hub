@@ -172,15 +172,16 @@ class SofabatonHubApiClient:
 
         self._on_message_callback = _barrier_check
 
-        # Clear any previously retained barrier message to avoid stale loopbacks
-        await mqtt.async_publish(self.hass, barrier_topic, "", retain=True)
-
-        # Publish a non-retained barrier message for this verification
+        # Publish a retained barrier message. Retained is essential here:
+        # the broker delivers retained messages to subscribers when their
+        # subscription is confirmed (SUBACK). A non-retained message would
+        # only reach already-confirmed subscribers, defeating the purpose.
         _LOGGER.debug("Publishing subscription barrier to %s", barrier_topic)
         await mqtt.async_publish(
             self.hass,
             barrier_topic,
             json.dumps({"status": "ready"}),
+            retain=True,
         )
 
         try:
@@ -202,6 +203,11 @@ class SofabatonHubApiClient:
             if self._barrier_unsub:
                 self._barrier_unsub()
                 self._barrier_unsub = None
+
+            # Clear the retained barrier message from the broker so it doesn't
+            # linger between restarts. Publishing an empty payload with retain
+            # tells the broker to delete the retained message.
+            await mqtt.async_publish(self.hass, barrier_topic, "", retain=True)
 
     # --- Request publishing methods ---
 
