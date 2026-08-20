@@ -12,36 +12,10 @@ function ensureEntityIdIsString(entityId) {
   return entityId;
 }
 
-// Check if entity is Sofabaton Hub - by entity attributes rather than ID
+// Check if entity belongs to the Sofabaton Hub integration
 function checkIfSofabatonHub(entityId, hass) {
   if (!hass || !entityId) return false;
-  
-  const stateObj = hass.states[entityId];
-  if (!stateObj) return false;
-  
-  // Check if entity has Sofabaton Hub specific attributes
-  const attributes = stateObj.attributes;
-  
-  // Sofabaton Hub entity should have these specific attributes
-  return (
-    // Check for activities attribute
-    attributes.activities !== undefined ||
-    // Check for devices attribute
-    attributes.devices !== undefined ||
-    // Check for current_activity_id attribute
-    attributes.current_activity_id !== undefined ||
-    // Check for assigned_keys and other key-related attributes
-    attributes.assigned_keys !== undefined ||
-    attributes.macro_keys !== undefined ||
-    attributes.favorite_keys !== undefined ||
-    // Check integration attribute (if exists)
-    attributes.integration === 'sofabaton_hub' ||
-    // Check device_class or other identifiers
-    attributes.device_class === 'sofabaton' ||
-    // Check if friendly_name contains sofabaton keyword
-    (attributes.friendly_name && 
-     attributes.friendly_name.toLowerCase().includes('sofabaton'))
-  );
+  return hass.entities?.[entityId]?.platform === "sofabaton_hub";
 }
 
 // Define remote control button layout and IDs
@@ -1839,10 +1813,8 @@ document.addEventListener("hass-more-info", (e) => {
     const selectedActivityId = e.detail.selectedActivityId;  // 接收选中的活动ID
     console.log("More info requested for entity:", entityId, "selectedActivityId:", selectedActivityId);
     
-    // Check if it's a Sofabaton Hub related remote entity
-    // Judge by checking entity attributes, not relying on entity ID naming
-    const isSofabatonHub = entityId?.startsWith("remote.") && 
-                          checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
+    // Check if this entity belongs to the Sofabaton Hub integration
+    const isSofabatonHub = entityId?.startsWith("remote.") && checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
     
     if (isSofabatonHub) {
         console.log("Intercepting more-info for Sofabaton Hub:", entityId);
@@ -1878,8 +1850,7 @@ document.addEventListener("hass-more-info", (e) => {
 document.addEventListener("show-dialog", (e) => {
     if (e.detail && e.detail.dialogTag === "ha-more-info-dialog") {
         const entityId = e.detail.dialogParams?.entityId;
-        const isSofabatonHub = entityId?.startsWith("remote.") && 
-                              checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
+        const isSofabatonHub = entityId?.startsWith("remote.") && checkIfSofabatonHub(entityId, document.querySelector("home-assistant")?.hass);
         
         if (isSofabatonHub) {
             console.log("Blocking default more-info dialog for:", entityId);
