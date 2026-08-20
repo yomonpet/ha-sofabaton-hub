@@ -22,7 +22,9 @@ async def async_get_config_entry_diagnostics(
     Returns:
         Dictionary containing diagnostic information with sensitive data redacted
     """
-    coordinator: SofabatonHubDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: SofabatonHubDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
+        "coordinator"
+    ]
     
     # Get coordinator data
     data = coordinator.data or {}

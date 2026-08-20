@@ -45,6 +45,7 @@ class SofabatonHubApiClient:
         self.mac: str = entry.data[CONF_MAC]
         self._on_message_callback: Callable[[str, dict[str, Any]], None] | None = None
         self._request_lock = asyncio.Lock()
+        self._unsubscribe_callbacks: list[Callable[[], None]] = []
 
     def set_on_message_callback(self, func: Callable[[str, dict[str, Any]], None]) -> None:
         """Set callback function to be called when MQTT message is received.
@@ -118,6 +119,10 @@ class SofabatonHubApiClient:
 
     async def async_subscribe_to_topics(self) -> None:
         """Subscribe to all MQTT topics that need to be monitored."""
+        if self._unsubscribe_callbacks:
+            _LOGGER.debug("MQTT topics are already subscribed for %s", self.mac)
+            return
+
         topics_to_subscribe = [
             TOPIC_ACTIVITY_LIST_RESPONSE,
             TOPIC_ACTIVITY_CONTROL_UP,
@@ -136,7 +141,19 @@ class SofabatonHubApiClient:
             topic = self._get_topic(topic_template)
             _LOGGER.info("Subscribing to topic: %s", topic)
             # Subscribe to topic and specify callback function for message arrival
-            await mqtt.async_subscribe(self.hass, topic, self._message_received)
+            unsubscribe = await mqtt.async_subscribe(self.hass, topic, self._message_received)
+            self._unsubscribe_callbacks.append(unsubscribe)
+
+    async def async_unsubscribe_from_topics(self) -> None:
+        """Remove MQTT subscriptions created by this API client."""
+        unsubscribe_callbacks = self._unsubscribe_callbacks
+        self._unsubscribe_callbacks = []
+
+        for unsubscribe in unsubscribe_callbacks:
+            try:
+                unsubscribe()
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Failed to unsubscribe MQTT topic for %s", self.mac)
 
     # --- Request publishing methods ---
 

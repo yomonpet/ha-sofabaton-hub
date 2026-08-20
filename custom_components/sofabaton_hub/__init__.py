@@ -58,11 +58,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "api_client": api_client,
     }
 
-    # First data refresh (before subscribing to MQTT topics to avoid receiving messages before data initialization)
-    await coordinator.async_config_entry_first_refresh()
-
-    # Subscribe to MQTT topics
+    # Subscribe before requesting data so the Hub's immediate response is not missed.
     await api_client.async_subscribe_to_topics()
+
+    # First data refresh
+    await coordinator.async_config_entry_first_refresh()
 
     # Set up platforms (e.g., remote)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -113,8 +113,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """
     # Remove our data from hass.data
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        api_client: SofabatonHubApiClient = hass.data[DOMAIN][entry.entry_id]["api_client"]
+        await api_client.async_unsubscribe_from_topics()
         hass.data[DOMAIN].pop(entry.entry_id)
-        # NOTE: Should also unregister frontend modules and static paths here,
-        # but HA Core currently does not provide a standard method for this
 
     return unload_ok
