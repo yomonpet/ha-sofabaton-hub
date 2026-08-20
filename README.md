@@ -10,6 +10,8 @@
 
 This is a custom integration for Home Assistant that allows you to control your Sofabaton Hub remote control. It provides a beautiful, feature-rich interface with real-time updates via MQTT.
 
+> **✅ Current Version**: **v1.0.5** (2026-08-20) — install/update via HACS.
+
 > **⚠️ Device Compatibility**
 >
 > This integration is designed for **Sofabaton X2** only.
@@ -127,7 +129,7 @@ If automatic discovery doesn't work, you can add the integration manually:
    - **Username**: The username you set in Mosquitto broker
    - **Password**: The password you set in Mosquitto broker
 
-**Note**: The MQTT credentials must match the ones you configured in the Mosquitto broker add-on.
+**Note**: This integration uses the MQTT connection from the Home Assistant **MQTT integration** — the broker host/port/credentials entered above are stored for reference but are **not** used to open a separate MQTT connection. Make sure the MQTT integration in Home Assistant is configured and connected, and that the Sofabaton Hub publishes to the same broker.
 
 ---
 
@@ -156,7 +158,9 @@ After installation, you need to add the custom cards to your Lovelace dashboard.
 6. **Select your remote entity** from the dropdown (e.g., `remote.sofabaton_hub_aabbccddeeff`)
 7. **Click "Save"**
 
-> **💡 Tip**: The card will automatically register as "Custom: Sofabaton Hub" in the card picker. Both the main card and detail card use the same registration name.
+> **💡 Tip**: The main card registers in the card picker as "Custom: Sofabaton Hub". The detail view is **not** a separate picker entry — it is opened automatically from the main card's "More Info" button.
+
+> **⚠️ Visual editor compatibility**: On some newer Home Assistant versions the visual card editor may show "Visual editor not supported" / "Attempted to assign to readonly property". If that happens, use the YAML editor below — it works reliably.
 
 **Method 2: YAML Editor**
 
@@ -177,14 +181,9 @@ entity: remote.sofabaton_hub_aabbccddeeff
 - Refresh button to reload data
 - "More Info" button appears when an activity is running
 
-#### Detail Card (Key Control)
+#### Detail View (Key Control)
 
-The detail card is automatically shown when you click the "More Info" button on an active activity in the main card. You can also add it manually:
-
-```yaml
-type: custom:sofabaton-detail-card
-entity: remote.sofabaton_hub_aabbccddeeff
-```
+The detail view is opened automatically when you click the "More Info" button on an active activity in the main card. It is **not** a standalone Lovelace card — do not try to add it manually as `custom:sofabaton-detail-card` (it is not supported as a separate card).
 
 **Features:**
 - Tabbed interface for different key types (Assigned Keys, Macro Keys, Favorite Keys)
@@ -289,7 +288,7 @@ The coordinator is the central data management component:
 **Key Features:**
 - No periodic polling (MQTT push-based)
 - Automatic reconnection on MQTT disconnection
-- Request timeout handling (30 seconds)
+- Request timeout handling (15 seconds)
 - Duplicate message filtering
 
 ##### 3. **Remote Entity (remote.py)**
@@ -327,15 +326,13 @@ Implements the Home Assistant `remote` platform:
    ↓
 3. Integration loads → Coordinator initializes
    ↓
-4. Coordinator connects to MQTT broker
+4. Integration subscribes to MQTT topics (via HA MQTT integration)
    ↓
-5. Coordinator subscribes to MQTT topics
+5. Coordinator requests basic data (activity list)
    ↓
-6. Coordinator requests basic data (activities + devices)
+6. Remote entity is created with initial state
    ↓
-7. Remote entity is created with initial state
-   ↓
-8. Frontend cards load and display data
+7. Frontend cards load and display data
 ```
 
 ##### Activity Switch Flow
@@ -556,27 +553,36 @@ A: The Sofabaton Hub uses MQTT for real-time communication. This allows for inst
 
 ### 📋 Version History
 
-**v2.3.4** (Current)
-- Optimized frontend update logic to prevent duplicate renders
-- Added data cleanup when requesting new activity keys
-- Increased periodic state check interval from 1s to 5s
-- Improved request timeout handling
+**v1.0.5** (Current)
+- Fixed MQTT startup timing: subscribe to response topics before requesting initial data (prevents empty activity list / missing switches after a Home Assistant restart)
+- Unsubscribe MQTT callbacks when the integration is unloaded
+- Fixed diagnostics download error when reading the stored coordinator
+- Scoped the "More Info" dialog override to this integration's entities only
 
-**v2.3.x**
-- Added sequential request mechanism for key data
-- Implemented debouncing for state updates (500ms)
-- Fixed dialog close issues
-- Improved error handling and logging
+**v1.0.4**
+- Updated HACS installation instructions
+- Synced manifest version number with the release
 
-**v2.x**
-- Added custom Lovelace cards
-- Implemented MQTT-based real-time updates
-- Added support for macro and favorite keys
+**v1.0.3**
+- Removed invalid fields from hacs.json
+- Fixed manifest.json field ordering for HACS validation
 
-**v1.x**
+**v1.0.2**
+- Added switch entity platform for activity control
+- Improved README structure and documentation
+
+**v1.0.1**
+- Added integration icons and logo files
+
+**v1.0.0**
 - Initial release
-- Basic activity control
-- mDNS auto-discovery
+- Activity control, key management, custom Lovelace cards, mDNS auto-discovery
+
+---
+
+### 🙏 Acknowledgements
+
+Special thanks to **[M3tac0de](https://github.com/m3tac0de)** for advancing the SofaBaton Home Assistant community through **[Sofabaton X](https://github.com/m3tac0de/home-assistant-sofabaton-x1s)**, a feature-rich local integration for X1, X1S, and X2 hubs. Its dashboard cards, bidirectional automation support, local hub management, and backup and restore tools help make SofaBaton more capable and enjoyable in Home Assistant.
 
 ---
 
@@ -662,6 +668,8 @@ This project is licensed under the MIT License.
 ### 📖 概述
 
 这是一个 Home Assistant 自定义集成，允许您控制 Sofabaton Hub 万能遥控器。它提供了一个美观、功能丰富的界面，通过 MQTT 实现实时更新。
+
+> **✅ 当前版本**：**v1.0.5**（2026-08-20）— 请通过 HACS 安装/更新。
 
 > **⚠️ 设备兼容性**
 >
@@ -766,7 +774,7 @@ This project is licensed under the MIT License.
    - **用户名**：您在 Mosquitto 代理中设置的用户名
    - **密码**：您在 Mosquitto 代理中设置的密码
 
-**注意**：MQTT 凭据必须与您在 Mosquitto 代理加载项中配置的凭据匹配。
+**注意**：本集成使用 Home Assistant **MQTT 集成** 的现有连接——上方填写的代理主机/端口/凭据仅用于记录，**不会**用来单独建立 MQTT 连接。请确保 Home Assistant 的 MQTT 集成已配置并显示已连接，且 Sofabaton Hub 发布到同一个代理。
 
 ---
 
@@ -795,7 +803,9 @@ This project is licensed under the MIT License.
 6. **从下拉菜单选择您的遥控器实体**（例如：`remote.sofabaton_hub_aabbccddeeff`）
 7. **点击"保存"**
 
-> **💡 提示**：卡片会自动注册为"Custom: Sofabaton Hub"。主卡片和详情卡片使用相同的注册名称。
+> **💡 提示**：主卡片会在卡片选择器中注册为"Custom: Sofabaton Hub"。详情视图**不是**独立的选择器条目——它通过主卡片的"更多信息"按钮自动打开。
+
+> **⚠️ 可视化编辑器兼容性**：在某些较新的 Home Assistant 版本中，可视化卡片编辑器可能提示 "Visual editor not supported" / "Attempted to assign to readonly property"。如遇此情况，请改用下方的 YAML 编辑器——该方式稳定可用。
 
 **方法 2：YAML 编辑器**
 
@@ -816,14 +826,9 @@ entity: remote.sofabaton_hub_aabbccddeeff
 - 刷新按钮重新加载数据
 - 活动运行时显示"更多信息"按钮
 
-#### 详情卡片（按键控制）
+#### 详情视图（按键控制）
 
-详情卡片会在您点击主卡片中活动活动的"更多信息"按钮时自动显示。您也可以手动添加：
-
-```yaml
-type: custom:sofabaton-detail-card
-entity: remote.sofabaton_hub_aabbccddeeff
-```
+详情视图会在您点击主卡片中活动活动的"更多信息"按钮时自动打开。它**不是**独立的 Lovelace 卡片——请勿将其作为 `custom:sofabaton-detail-card` 单独添加（暂不支持作为独立卡片）。
 
 **功能：**
 - 不同按键类型的选项卡界面（分配按键、宏按键、收藏按键）
@@ -928,7 +933,7 @@ entity: remote.sofabaton_hub_aabbccddeeff
 **关键特性：**
 - 无定期轮询（基于 MQTT 推送）
 - MQTT 断开时自动重连
-- 请求超时处理（30 秒）
+- 请求超时处理（15 秒）
 - 重复消息过滤
 
 ##### 3. **遥控器实体 (remote.py)**
@@ -966,15 +971,13 @@ entity: remote.sofabaton_hub_aabbccddeeff
    ↓
 3. 集成加载 → 协调器初始化
    ↓
-4. 协调器连接到 MQTT 代理
+4. 集成订阅 MQTT 主题（通过 HA 的 MQTT 集成）
    ↓
-5. 协调器订阅 MQTT 主题
+5. 协调器请求基础数据（活动列表）
    ↓
-6. 协调器请求基础数据（活动 + 设备）
+6. 创建具有初始状态的遥控器实体
    ↓
-7. 创建具有初始状态的遥控器实体
-   ↓
-8. 前端卡片加载并显示数据
+7. 前端卡片加载并显示数据
 ```
 
 ##### 活动切换流程
@@ -1201,27 +1204,36 @@ automation:
 
 ### 📋 版本历史
 
-**v2.3.4**（当前版本）
-- 优化前端更新逻辑以防止重复渲染
-- 请求新活动按键时添加数据清理
-- 将定期状态检查间隔从 1 秒增加到 5 秒
-- 改进请求超时处理
+**v1.0.5**（当前版本）
+- 修复 MQTT 启动时序：先订阅响应主题再请求初始数据（避免 Home Assistant 重启后活动列表为空/开关缺失）
+- 卸载集成时取消 MQTT 订阅
+- 修复读取存储的协调器时诊断下载报错
+- 将"更多信息"弹窗拦截范围限定为本集成实体
 
-**v2.3.x**
-- 添加按键数据的串联请求机制
-- 实现状态更新的防抖处理（500ms）
-- 修复对话框关闭问题
-- 改进错误处理和日志记录
+**v1.0.4**
+- 更新 HACS 安装说明
+- 同步 manifest 版本号与发布版本
 
-**v2.x**
-- 添加自定义 Lovelace 卡片
-- 实现基于 MQTT 的实时更新
-- 添加对宏和收藏按键的支持
+**v1.0.3**
+- 移除 hacs.json 中的无效字段
+- 修正 manifest.json 字段顺序以通过 HACS 校验
 
-**v1.x**
+**v1.0.2**
+- 新增开关实体平台用于活动控制
+- 改进 README 结构与文档
+
+**v1.0.1**
+- 新增集成图标与 logo 文件
+
+**v1.0.0**
 - 初始版本
-- 基本活动控制
-- mDNS 自动发现
+- 活动控制、按键管理、自定义 Lovelace 卡片、mDNS 自动发现
+
+---
+
+### 🙏 鸣谢
+
+特别感谢 **[M3tac0de](https://github.com/m3tac0de)** 通过 **[Sofabaton X](https://github.com/m3tac0de/home-assistant-sofabaton-x1s)** 推动 SofaBaton 在 Home Assistant 社区中的发展。这是一款功能丰富的本地集成，支持 X1、X1S 和 X2 Hub；它提供仪表板卡片、双向自动化、本地 Hub 管理以及备份与恢复工具，让 SofaBaton 在 Home Assistant 中有更多好玩的玩法。
 
 ---
 
