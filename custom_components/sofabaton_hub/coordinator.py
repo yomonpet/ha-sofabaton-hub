@@ -74,9 +74,6 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         self._basic_data_request_state = None  # Basic data request state
         self._basic_data_timeout = None  # Basic data request timeout
 
-        # Set MQTT message callback
-        self.api_client.set_on_message_callback(self._handle_mqtt_message)
-
         # Initialize data structure
         self.data: dict[str, Any] = {
             "activities": {},  # activity_id -> {name, id, state}

@@ -5,6 +5,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
@@ -60,8 +61,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Subscribe before requesting data so the Hub's immediate response is not missed.
     await api_client.async_subscribe_to_topics()
+    if not await api_client.async_verify_subscriptions():
+        await api_client.async_unsubscribe_from_topics()
+        raise ConfigEntryNotReady("MQTT response subscriptions are not ready")
 
-    # First data refresh
+    # Begin processing Hub messages only after all response subscriptions are
+    # confirmed active by the broker.
+    api_client.set_on_message_callback(coordinator._handle_mqtt_message)
+
+    # First data refresh after broker-side subscriptions are confirmed.
     await coordinator.async_config_entry_first_refresh()
 
     # Set up platforms (e.g., remote)

@@ -10,7 +10,7 @@
 
 This is a custom integration for Home Assistant that allows you to control your Sofabaton Hub remote control. It provides a beautiful, feature-rich interface with real-time updates via MQTT.
 
-> **✅ Current Version**: **v1.0.5** (2026-08-20) — install/update via HACS.
+> **✅ Current Version**: **v1.0.6** (2026-10-12) — install/update via HACS.
 
 > **⚠️ Device Compatibility**
 >
@@ -553,7 +553,11 @@ A: The Sofabaton Hub uses MQTT for real-time communication. This allows for inst
 
 ### 📋 Version History
 
-**v1.0.5** (Current)
+**v1.0.6** (Current)
+- Verify broker-side MQTT subscriptions with a retained loopback barrier before requesting initial data, preventing intermittent startup timeouts
+- Start coordinator message handling only after MQTT response subscriptions are confirmed active
+
+**v1.0.5**
 - Fixed MQTT startup timing: subscribe to response topics before requesting initial data (prevents empty activity list / missing switches after a Home Assistant restart)
 - Unsubscribe MQTT callbacks when the integration is unloaded
 - Fixed diagnostics download error when reading the stored coordinator
@@ -669,7 +673,7 @@ This project is licensed under the MIT License.
 
 这是一个 Home Assistant 自定义集成，允许您控制 Sofabaton Hub 万能遥控器。它提供了一个美观、功能丰富的界面，通过 MQTT 实现实时更新。
 
-> **✅ 当前版本**：**v1.0.5**（2026-08-20）— 请通过 HACS 安装/更新。
+> **✅ 当前版本**：**v1.0.6**（2026-10-12）— 请通过 HACS 安装/更新。
 
 > **⚠️ 设备兼容性**
 >
@@ -1204,7 +1208,11 @@ automation:
 
 ### 📋 版本历史
 
-**v1.0.5**（当前版本）
+**v1.0.6**（当前版本）
+- 使用 retained 回环屏障确认 broker 侧 MQTT 订阅已生效后再请求初始数据，避免间歇性启动超时
+- 仅在 MQTT 响应订阅确认生效后启动协调器消息处理
+
+**v1.0.5**
 - 修复 MQTT 启动时序：先订阅响应主题再请求初始数据（避免 Home Assistant 重启后活动列表为空/开关缺失）
 - 卸载集成时取消 MQTT 订阅
 - 修复读取存储的协调器时诊断下载报错
