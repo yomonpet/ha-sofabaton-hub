@@ -5,7 +5,6 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
@@ -61,16 +60,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Subscribe before requesting data so the Hub's immediate response is not missed.
     await api_client.async_subscribe_to_topics()
-    if not await api_client.async_verify_subscriptions():
-        await api_client.async_unsubscribe_from_topics()
-        raise ConfigEntryNotReady("MQTT response subscriptions are not ready")
 
-    # Begin processing Hub messages only after all response subscriptions are
-    # confirmed active by the broker.
-    api_client.set_on_message_callback(coordinator._handle_mqtt_message)
-
-    # First data refresh after broker-side subscriptions are confirmed.
+    # First data refresh
     await coordinator.async_config_entry_first_refresh()
+
+    # Continue checking Hub reachability even when no dashboard is open.
+    coordinator.start_health_monitor()
 
     # Set up platforms (e.g., remote)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -86,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 StaticPathConfig(
                     f"/{DOMAIN}/www",
                     hass.config.path(f"custom_components/{DOMAIN}/www"),
-                    True,  # cache_headers
+                    False,  # cache_headers
                 )
             ]
         )
@@ -97,10 +92,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from homeassistant.components import frontend  # pylint: disable=import-outside-toplevel
 
         # Register main card and detail card as ES6 modules first
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js")
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js?v=offline-status-1")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js?v=offline-status-1")
         # Then register the cards.js for Lovelace picker
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js?v=offline-status-1")
 
         _LOGGER.info("Successfully registered Sofabaton Hub frontend cards")
     except Exception as err:  # pylint: disable=broad-except
@@ -121,6 +116,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """
     # Remove our data from hass.data
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        coordinator: SofabatonHubDataUpdateCoordinator = hass.data[DOMAIN][
+            entry.entry_id
+        ]["coordinator"]
+        coordinator.stop_health_monitor()
         api_client: SofabatonHubApiClient = hass.data[DOMAIN][entry.entry_id]["api_client"]
         await api_client.async_unsubscribe_from_topics()
         hass.data[DOMAIN].pop(entry.entry_id)

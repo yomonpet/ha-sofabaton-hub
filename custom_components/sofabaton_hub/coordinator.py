@@ -5,10 +5,12 @@ import asyncio
 import copy
 import logging
 import time
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .api import SofabatonHubApiClient
@@ -36,6 +38,9 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+_HEALTH_CHECK_INTERVAL = timedelta(seconds=120)
+_HEALTH_CHECK_TIMEOUT = 10
+_HEALTH_CHECK_FAILURE_LIMIT = 2
 
 class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage and coordinate Sofabaton Hub data updates."""
@@ -74,6 +79,16 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         self._basic_data_request_state = None  # Basic data request state
         self._basic_data_timeout = None  # Basic data request timeout
 
+        # Hub connectivity monitor based on activity-list request/response.
+        self._hub_online: bool | None = None
+        self._health_check_failures = 0
+        self._health_check_response: asyncio.Event | None = None
+        self._health_check_task: asyncio.Task | None = None
+        self._health_check_unsubscribe = None
+
+        # Set MQTT message callback
+        self.api_client.set_on_message_callback(self._handle_mqtt_message)
+
         # Initialize data structure
         self.data: dict[str, Any] = {
             "activities": {},  # activity_id -> {name, id, state}
@@ -109,6 +124,95 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
                     "device_keys": {},
                 },
             }
+
+    @property
+    def hub_online(self) -> bool | None:
+        """Return the last known Hub connectivity state."""
+        return self._hub_online
+
+    def start_health_monitor(self) -> None:
+        """Start periodic Hub reachability checks."""
+        if self._health_check_unsubscribe is not None:
+            return
+
+        self._health_check_unsubscribe = async_track_time_interval(
+            self.hass,
+            self._schedule_health_check,
+            _HEALTH_CHECK_INTERVAL,
+        )
+
+    def stop_health_monitor(self) -> None:
+        """Stop periodic Hub reachability checks and cancel an active probe."""
+        if self._health_check_unsubscribe is not None:
+            self._health_check_unsubscribe()
+            self._health_check_unsubscribe = None
+
+        if self._health_check_task is not None:
+            self._health_check_task.cancel()
+            self._health_check_task = None
+
+    @callback
+    def _schedule_health_check(self, _now: datetime | None = None) -> None:
+        """Schedule a probe unless the previous probe is still running."""
+        if self._health_check_task is not None and not self._health_check_task.done():
+            return
+
+        self._health_check_task = self.hass.async_create_task(
+            self._async_check_hub()
+        )
+
+    async def _async_check_hub(self) -> None:
+        """Request the activity list and wait for a Hub MQTT response."""
+        response = asyncio.Event()
+        self._health_check_response = response
+
+        try:
+            await self.async_request_basic_data()
+            await asyncio.wait_for(response.wait(), timeout=_HEALTH_CHECK_TIMEOUT)
+        except asyncio.TimeoutError:
+            self._record_health_check_failure("no activity-list response")
+        except asyncio.CancelledError:
+            raise
+        except Exception as err:  # pylint: disable=broad-except
+            self._record_health_check_failure(f"request failed: {err}")
+        finally:
+            if self._health_check_response is response:
+                self._health_check_response = None
+
+    def _record_health_check_success(self) -> None:
+        """Mark the Hub online after receiving one of its MQTT messages."""
+        self._health_check_failures = 0
+
+        if self._health_check_response is not None:
+            self._health_check_response.set()
+
+        if self._hub_online is not True:
+            _LOGGER.info("Sofabaton Hub %s is online", self.mac)
+            self._hub_online = True
+            self.async_set_updated_data(copy.deepcopy(self.data))
+
+    def _record_health_check_failure(self, reason: str) -> None:
+        """Mark the Hub offline after consecutive unanswered probes."""
+        self._health_check_failures += 1
+        _LOGGER.debug(
+            "Hub health check failed for %s (%d/%d): %s",
+            self.mac,
+            self._health_check_failures,
+            _HEALTH_CHECK_FAILURE_LIMIT,
+            reason,
+        )
+
+        if (
+            self._health_check_failures >= _HEALTH_CHECK_FAILURE_LIMIT
+            and self._hub_online is not False
+        ):
+            _LOGGER.warning(
+                "Sofabaton Hub %s is offline after %d failed health checks",
+                self.mac,
+                self._health_check_failures,
+            )
+            self._hub_online = False
+            self.async_set_updated_data(copy.deepcopy(self.data))
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Periodic data update (using sequential requests).
@@ -548,6 +652,7 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
 
         handler_info = topic_map.get(topic)
         if handler_info:
+            self._record_health_check_success()
             update_type, handler, use_debounce = handler_info
             handler(payload)
             # Only use debounce update mechanism for messages that need it

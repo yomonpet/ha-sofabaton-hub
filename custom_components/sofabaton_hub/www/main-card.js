@@ -226,7 +226,12 @@ class SofabatonMainCard extends LitElement {
     const stateObj = this.hass.states[this.config.entity];
     
     // Add debug log to track rendering
-    console.log("Main card: Rendering with state", stateObj ? 'available' : 'unavailable');
+    console.log(
+      "Main card: Entity state",
+      stateObj?.state ?? 'not found',
+      "hub_online",
+      stateObj?.attributes?.hub_online
+    );
 
     if (!stateObj) {
       return html`
@@ -251,10 +256,11 @@ class SofabatonMainCard extends LitElement {
     
     // Check data loading status
     const hasActivities = Object.keys(activities).length > 0;
+    const isHubOffline = attributes.hub_online === false || stateObj.state === 'unavailable';
     // DEVICE_DISABLED: Temporarily disable device functionality - uncomment below line when restoring并启用设备检查
     // const hasDevices = Object.keys(devices).length > 0;
     // const isDataLoading = !hasActivities || !hasDevices;
-    const isDataLoading = !hasActivities;
+    const isDataLoading = !hasActivities && !isHubOffline;
     
     // Find currently selected activity object
     const selectedActivity = activities.find(a => a.id === this._selectedActivityId);
@@ -271,7 +277,6 @@ class SofabatonMainCard extends LitElement {
     // Two conditions need to be met:
     // 1. There's a running activity (based on TOPIC_ACTIVITY_CONTROL_UP data) and it's not activity ID 255
     // 2. User has selected an activity and it's in 'on' state, or no activity selected but there's a running one
-    
     const hasRunningActivity = currentActivityId && currentActivityId !== 255;
 
     let shouldShowBasedOnSelection = false;
@@ -323,6 +328,13 @@ class SofabatonMainCard extends LitElement {
         </div>
         
         <div class="card-content">
+          ${isHubOffline ? html`
+            <div class="offline-status" role="status">
+              <ha-icon icon="mdi:lan-disconnect"></ha-icon>
+              <span>Sofabaton Hub is offline. Waiting for it to reconnect.</span>
+            </div>
+          ` : ''}
+
           <!-- Data loading status indicator -->
           ${isDataLoading ? html`
             <div class="loading-status">
@@ -545,6 +557,18 @@ class SofabatonMainCard extends LitElement {
       }
       .loading-status ha-icon {
         color: var(--primary-color);
+      }
+      .offline-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        color: var(--error-color);
+        background: color-mix(in srgb, var(--error-color) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--error-color) 35%, transparent);
+        border-radius: 6px;
+        margin: 8px 16px;
+        font-size: 14px;
       }
       .spinning {
         animation: spin 1s linear infinite;

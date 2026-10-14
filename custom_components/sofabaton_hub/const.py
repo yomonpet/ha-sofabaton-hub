@@ -45,9 +45,6 @@ TOPIC_ACTIVITY_MACRO_LIST = "activity/{mac}/macro_keys_list"
 TOPIC_ACTIVITY_ASSIGNED_KEY_CONTROL = "activity/{mac}/keys_control"
 TOPIC_ACTIVITY_MACRO_KEY_CONTROL = "activity/{mac}/macro_keys_control"
 
-# Startup-only topic used to confirm broker-side MQTT subscriptions.
-TOPIC_SUBSCRIPTION_BARRIER = "activity/{mac}/subscription_barrier"
-
 # Device-related topics
 TOPIC_DEVICE_LIST_REQUEST = "device/{mac}/list_request"
 TOPIC_DEVICE_LIST_RESPONSE = "device/{mac}/list"

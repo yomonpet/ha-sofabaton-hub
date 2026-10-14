@@ -164,6 +164,9 @@ class SofabatonActivitySwitch(CoordinatorEntity, SwitchEntity):
         if self.coordinator.data is None:
             return False
 
+        if self.coordinator.hub_online is False:
+            return False
+
         # Check if this activity still exists in the coordinator data
         activities = self.coordinator.data.get("activities", {})
         return self._activity_id in activities

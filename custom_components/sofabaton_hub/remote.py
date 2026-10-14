@@ -75,6 +75,11 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         self.async_write_ha_state()
 
     @property
+    def available(self) -> bool:
+        """Return whether the Hub is reachable."""
+        return super().available and self.coordinator.hub_online is not False
+
+    @property
     def is_on(self) -> bool:
         """Return True if any activity is active.
 
@@ -101,6 +106,7 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
             _LOGGER.debug("extra_state_attributes: coordinator.data is None")
             return {
                 "activities": [],
+                "hub_online": self.coordinator.hub_online,
                 # DEVICE_DISABLED: Device functionality temporarily disabled
                 # Uncomment below when re-enabling device support
                 # "devices": [],
@@ -127,6 +133,7 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
 
         result = {
             "activities": list(data.get("activities", {}).values()),
+            "hub_online": self.coordinator.hub_online,
             # DEVICE_DISABLED: Device functionality temporarily disabled
             # Uncomment below when re-enabling device support
             # "devices": list(data.get("devices", {}).values()),

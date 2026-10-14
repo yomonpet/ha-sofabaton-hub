@@ -25,7 +25,6 @@ from .const import (
     TOPIC_ACTIVITY_MACRO_KEY_CONTROL,
     TOPIC_ACTIVITY_MACRO_LIST,
     TOPIC_ACTIVITY_MACRO_REQUEST,
-    TOPIC_SUBSCRIPTION_BARRIER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,9 +46,6 @@ class SofabatonHubApiClient:
         self._on_message_callback: Callable[[str, dict[str, Any]], None] | None = None
         self._request_lock = asyncio.Lock()
         self._unsubscribe_callbacks: list[Callable[[], None]] = []
-        self._barrier_unsubscribe: Callable[[], None] | None = None
-        self._subscription_barrier_topic: str | None = None
-        self._subscription_barrier_received: asyncio.Event | None = None
 
     def set_on_message_callback(self, func: Callable[[str, dict[str, Any]], None]) -> None:
         """Set callback function to be called when MQTT message is received.
@@ -106,28 +102,20 @@ class SofabatonHubApiClient:
         _LOGGER.info("MQTT message received on topic: %s", msg.topic)
         _LOGGER.debug("MQTT payload (raw): %s", msg.payload)
 
-        try:
-            # Try to parse payload as JSON
-            payload_json = json.loads(msg.payload)
-            _LOGGER.debug("MQTT payload (parsed): %s", payload_json)
+        if self._on_message_callback:
+            try:
+                # Try to parse payload as JSON
+                payload_json = json.loads(msg.payload)
+                _LOGGER.debug("MQTT payload (parsed): %s", payload_json)
 
-            if (
-                msg.topic == self._subscription_barrier_topic
-                and payload_json.get("status") == "ready"
-                and self._subscription_barrier_received is not None
-            ):
-                self._subscription_barrier_received.set()
-                return
-
-            if self._on_message_callback:
                 # Call callback function set in coordinator, passing topic and parsed payload
                 _LOGGER.debug("Calling message callback for topic: %s", msg.topic)
                 self._on_message_callback(msg.topic, payload_json)
-            else:
-                _LOGGER.warning("No message callback registered!")
-        except json.JSONDecodeError:
-            # Log error if JSON parsing fails
-            _LOGGER.error("Failed to decode JSON from payload: %s", msg.payload)
+            except json.JSONDecodeError:
+                # Log error if JSON parsing fails
+                _LOGGER.error("Failed to decode JSON from payload: %s", msg.payload)
+        else:
+            _LOGGER.warning("No message callback registered!")
 
     async def async_subscribe_to_topics(self) -> None:
         """Subscribe to all MQTT topics that need to be monitored."""
@@ -147,7 +135,6 @@ class SofabatonHubApiClient:
             # Uncomment below when re-enabling device support
             # TOPIC_DEVICE_KEYS_LIST,
             TOPIC_ACTIVITY_MACRO_LIST,
-            TOPIC_SUBSCRIPTION_BARRIER,
         ]
 
         for topic_template in topics_to_subscribe:
@@ -155,48 +142,7 @@ class SofabatonHubApiClient:
             _LOGGER.info("Subscribing to topic: %s", topic)
             # Subscribe to topic and specify callback function for message arrival
             unsubscribe = await mqtt.async_subscribe(self.hass, topic, self._message_received)
-            if callable(unsubscribe):
-                self._unsubscribe_callbacks.append(unsubscribe)
-                if topic_template == TOPIC_SUBSCRIPTION_BARRIER:
-                    self._barrier_unsubscribe = unsubscribe
-
-    async def async_verify_subscriptions(self) -> bool:
-        """Verify the broker has activated all response subscriptions.
-
-        Home Assistant batches subscriptions during startup but publishes
-        immediately. A retained self-loopback is delivered only after the
-        broker activates the final subscription in the batch.
-        """
-        barrier_topic = self._get_topic(TOPIC_SUBSCRIPTION_BARRIER)
-        barrier_received = asyncio.Event()
-        self._subscription_barrier_topic = barrier_topic
-        self._subscription_barrier_received = barrier_received
-
-        try:
-            _LOGGER.debug("Publishing MQTT subscription barrier to %s", barrier_topic)
-            await mqtt.async_publish(
-                self.hass,
-                barrier_topic,
-                json.dumps({"status": "ready"}),
-                retain=True,
-            )
-            await asyncio.wait_for(barrier_received.wait(), timeout=5.0)
-        except asyncio.TimeoutError:
-            _LOGGER.warning("MQTT subscription barrier timed out for %s", self.mac)
-            return False
-        finally:
-            self._subscription_barrier_topic = None
-            self._subscription_barrier_received = None
-
-            if self._barrier_unsubscribe:
-                self._barrier_unsubscribe()
-                self._unsubscribe_callbacks.remove(self._barrier_unsubscribe)
-                self._barrier_unsubscribe = None
-
-            await mqtt.async_publish(self.hass, barrier_topic, "", retain=True)
-
-        _LOGGER.debug("MQTT subscriptions verified for %s", self.mac)
-        return True
+            self._unsubscribe_callbacks.append(unsubscribe)
 
     async def async_unsubscribe_from_topics(self) -> None:
         """Remove MQTT subscriptions created by this API client."""
