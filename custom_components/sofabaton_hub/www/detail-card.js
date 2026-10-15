@@ -98,7 +98,20 @@ class SofabatonDetailCard extends LitElement {
     return css`
       /* Overall container */
       .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
         padding: 16px;
+      }
+
+      .status-message,
+      .page-content {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
       }
       
       /* Current activity info styles */
@@ -106,13 +119,26 @@ class SofabatonDetailCard extends LitElement {
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 100%;
+        max-width: 360px;
         gap: 8px;
-        padding: 12px;
-        background: var(--primary-color);
-        color: var(--text-primary-color);
+        box-sizing: border-box;
+        min-height: 48px;
+        padding: 12px 16px;
+        background: linear-gradient(110deg, rgba(12, 34, 42, 0.96), rgba(19, 20, 32, 0.96));
+        border: 1px solid rgba(105, 220, 216, 0.3);
         border-radius: 8px;
-        margin-bottom: 16px;
+        margin: 0 auto 16px;
+        color: #d9fbff;
         text-align: center;
+        box-shadow: inset 0 0 16px rgba(0, 229, 255, 0.045);
+      }
+      .current-activity ha-icon {
+        color: #69dad8;
+        filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.38));
+      }
+      .current-activity span {
+        font-weight: 500;
       }
       
       /* Page navigation styles */
@@ -120,18 +146,24 @@ class SofabatonDetailCard extends LitElement {
         display: flex;
         justify-content: center;
         align-items: center;
+        width: 100%;
         margin-bottom: 16px;
-        gap: 20px;
       }
-      
-      .page-nav ha-icon-button {
-        --mdc-icon-button-size: 40px;
-      }
-      
-      .page-nav span {
-        font-weight: 500;
-        min-width: 120px;
-        text-align: center;
+      .page-nav ha-select {
+        width: 100%;
+        max-width: 360px;
+        margin-inline: auto;
+        box-sizing: border-box;
+        border-radius: 8px;
+        color: #d9fbff;
+        --mdc-theme-primary: #69dad8;
+        --mdc-select-fill-color: rgba(8, 16, 21, 0.94);
+        --mdc-select-ink-color: #d9fbff;
+        --mdc-select-label-ink-color: #91aaad;
+        --mdc-select-dropdown-icon-color: #69dad8;
+        --mdc-select-idle-line-color: rgba(105, 220, 216, 0.28);
+        --mdc-select-hover-line-color: rgba(105, 220, 216, 0.72);
+        --mdc-select-focused-line-color: #69dad8;
       }
       
       /* No activity state styles */
@@ -163,17 +195,58 @@ class SofabatonDetailCard extends LitElement {
       
       /* Main remote control container */
       .remote-layout {
+        position: relative;
+        isolation: isolate;
         display: flex;
         flex-direction: column;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 360px;
+        margin-inline: auto;
         gap: 20px;
         align-items: center;
-        background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+        background-image:
+          linear-gradient(rgba(105, 220, 216, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(105, 220, 216, 0.025) 1px, transparent 1px),
+          linear-gradient(135deg, #142329 0%, #0b1118 54%, #1a121e 100%);
+        background-size: 28px 28px, 28px 28px, auto;
         border-radius: 20px;
         padding: 24px;
-        box-shadow: 
-          0 8px 32px rgba(0, 0, 0, 0.3),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow:
+          0 14px 36px rgba(0, 0, 0, 0.42),
+          inset 0 1px 0 rgba(210, 255, 255, 0.06),
+          inset 0 0 28px rgba(0, 229, 255, 0.035);
+        border: 1px solid rgba(116, 210, 213, 0.22);
+      }
+
+      .command-page {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 360px;
+        height: 776px;
+        min-width: 0;
+        margin-inline: auto;
+        overflow-y: auto;
+        padding: 20px;
+        background-image:
+          linear-gradient(rgba(105, 220, 216, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(105, 220, 216, 0.025) 1px, transparent 1px),
+          linear-gradient(135deg, #142329 0%, #0b1118 54%, #1a121e 100%);
+        background-size: 28px 28px, 28px 28px, auto;
+        border: 1px solid rgba(116, 210, 213, 0.22);
+        border-radius: 20px;
+        box-shadow:
+          0 14px 36px rgba(0, 0, 0, 0.42),
+          inset 0 1px 0 rgba(210, 255, 255, 0.06),
+          inset 0 0 28px rgba(0, 229, 255, 0.035);
+      }
+
+      .command-page .loading-message {
+        flex: 1;
+        justify-content: center;
+        min-height: 0;
       }
       
       /* Button base styles */
@@ -246,10 +319,11 @@ class SofabatonDetailCard extends LitElement {
         grid-template-rows: 60px 60px 60px;
         place-items: center;
         gap: 4px;
-        background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+        background: linear-gradient(145deg, rgba(8, 16, 21, 0.96), rgba(5, 10, 15, 0.98));
         border-radius: 16px;
         padding: 8px;
-        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(105, 220, 216, 0.12);
+        box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.2);
       }
       
       /* OK button special styles */
@@ -281,10 +355,11 @@ class SofabatonDetailCard extends LitElement {
         gap: 12px;
         width: 100%;
         max-width: 240px;
-        background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+        background: linear-gradient(145deg, rgba(8, 16, 21, 0.96), rgba(5, 10, 15, 0.98));
         border-radius: 12px;
         padding: 16px;
-        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(105, 220, 216, 0.12);
+        box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.2);
         place-items: center;
       }
       .volume-channel-grid .key-wrapper {
@@ -295,10 +370,11 @@ class SofabatonDetailCard extends LitElement {
       
       /* Function key group styles */
       .key-group:nth-of-type(2) {
-        background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+        background: linear-gradient(145deg, rgba(8, 16, 21, 0.96), rgba(5, 10, 15, 0.98));
         border-radius: 12px;
         padding: 12px;
-        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(105, 220, 216, 0.12);
+        box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.2);
       }
       
       /* Volume button special styles */
@@ -363,6 +439,18 @@ class SofabatonDetailCard extends LitElement {
       .key-wrapper.partial-enabled ha-icon-button:hover {
         background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
         opacity: 0.85;
+      }
+
+      .key-wrapper.assigned-key ha-icon-button:not([disabled]) {
+        border-color: rgba(0, 229, 255, 0.75);
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.32), inset 0 0 8px rgba(0, 229, 255, 0.12);
+      }
+      .key-wrapper:not(.assigned-key) ha-icon-button[disabled] {
+        filter: grayscale(1);
+        opacity: 0.24;
+      }
+      .key-wrapper.assigned-key ha-icon-button:not([disabled]):hover {
+        box-shadow: 0 0 18px rgba(0, 229, 255, 0.55), inset 0 0 10px rgba(0, 229, 255, 0.18);
       }
       
       /* Text button styles */
@@ -431,7 +519,11 @@ class SofabatonDetailCard extends LitElement {
         display: flex;
         align-items: center;
         gap: 12px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 360px;
         padding: 12px 16px;
+        margin-inline: auto;
         border-radius: 8px;
         background: rgba(255, 193, 7, 0.1);
         border: 1px solid rgba(255, 193, 7, 0.3);
@@ -446,8 +538,11 @@ class SofabatonDetailCard extends LitElement {
         display: flex;
         align-items: center;
         gap: 8px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 360px;
         padding: 8px 12px;
-        margin-bottom: 12px;
+        margin: 0 auto 12px;
         background: rgba(33, 150, 243, 0.1);
         border: 1px solid rgba(33, 150, 243, 0.3);
         border-radius: 6px;
@@ -464,9 +559,19 @@ class SofabatonDetailCard extends LitElement {
         flex-direction: column;
         align-items: center;
         gap: 12px;
-        padding: 32px;
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        min-height: 180px;
+        padding: 32px 16px;
         text-align: center;
         color: var(--secondary-text-color);
+      }
+
+      .loading-message p {
+        max-width: 100%;
+        margin: 0;
+        overflow-wrap: anywhere;
       }
       
       .loading-message ha-icon {
@@ -484,79 +589,64 @@ class SofabatonDetailCard extends LitElement {
         to { transform: rotate(360deg); }
       }
       
-      /* Macro and favorite command grid layout */
+      /* Cyberpunk command grids */
       .macro-grid, .favorite-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        padding: 20px;
-        background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
-        border-radius: 16px;
-        box-shadow: 
-          0 8px 24px rgba(0, 0, 0, 0.3),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        align-content: start;
+        gap: 12px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
       }
-      
-      /* Macro button styles */
       .macro-button, .favorite-button {
-        aspect-ratio: 2.5 / 1;  /* Rectangle aspect ratio */
-        min-height: 50px;
-        background: #ffffff;  /* White background */
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;  /* Rounded rectangle */
-        color: #333333;  /* Black text */
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        min-height: 56px;
+        padding: 12px 14px;
+        border: 1px solid rgba(0, 229, 255, 0.58);
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(8, 28, 38, 0.96), rgba(15, 20, 31, 0.98));
+        color: #d9fbff;
         font-weight: 500;
         font-size: 14px;
         cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 
-          0 2px 4px rgba(0, 0, 0, 0.1),
-          0 1px 2px rgba(0, 0, 0, 0.06);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 12px 16px;
         word-wrap: break-word;
         hyphens: auto;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.12), inset 0 0 12px rgba(0, 229, 255, 0.06);
       }
-      
-      .macro-button:hover, .favorite-button:hover {
-        background: #f5f5f5;  /* Light gray hover */
-        border-color: #d0d0d0;
-        transform: translateY(-1px);
-        box-shadow: 
-          0 4px 8px rgba(0, 0, 0, 0.15),
-          0 2px 4px rgba(0, 0, 0, 0.1);
+      .favorite-button {
+        border-color: rgba(255, 56, 209, 0.62);
+        background: linear-gradient(135deg, rgba(34, 13, 36, 0.96), rgba(19, 17, 31, 0.98));
+        box-shadow: 0 0 10px rgba(255, 56, 209, 0.13), inset 0 0 12px rgba(255, 56, 209, 0.06);
       }
-      
+      .macro-button:hover {
+        border-color: #00e5ff;
+        transform: translateY(-2px);
+        box-shadow: 0 0 18px rgba(0, 229, 255, 0.35), inset 0 0 14px rgba(0, 229, 255, 0.1);
+      }
+      .favorite-button:hover {
+        border-color: #ff38d1;
+        transform: translateY(-2px);
+        box-shadow: 0 0 18px rgba(255, 56, 209, 0.38), inset 0 0 14px rgba(255, 56, 209, 0.1);
+      }
       .macro-button:active, .favorite-button:active {
-        background: #e8e8e8;  /* Darker gray pressed */
-        border-color: #c0c0c0;
-        transform: translateY(0px);
-        box-shadow: 
-          0 1px 2px rgba(0, 0, 0, 0.1),
-          inset 0 1px 2px rgba(0, 0, 0, 0.1);
+        transform: translateY(0) scale(0.98);
       }
-      
-      /* Button click ripple effect */
-      .macro-button::before, .favorite-button::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(0, 0, 0, 0.1);  /* Black ripple suitable for white background */
-        transform: translate(-50%, -50%);
-        transition: width 0.3s, height 0.3s;
-      }
-      
-      .macro-button.ripple::before, .favorite-button.ripple::before {
-        width: 100px;
-        height: 100px;
+      .macro-button:focus-visible, .favorite-button:focus-visible {
+        outline: 2px solid #00e5ff;
+        outline-offset: 3px;
       }
       
       /* Responsive design */
@@ -1432,13 +1522,16 @@ class SofabatonDetailCard extends LitElement {
         
         <!-- Page navigation -->
         <div class="page-nav">
-          <ha-icon-button @click=${() => this._changePage(-1)} .disabled=${this._currentPage === 1}>
-            <ha-icon icon="mdi:chevron-left"></ha-icon>
-          </ha-icon-button>
-          <span>${this._getPageTitle()} (${this._currentPage}/3)</span>
-          <ha-icon-button @click=${() => this._changePage(1)} .disabled=${this._currentPage === 3}>
-            <ha-icon icon="mdi:chevron-right"></ha-icon>
-          </ha-icon-button>
+          <ha-select
+            label="Control group"
+            .value=${String(this._currentPage)}
+            @selected=${this._handlePageSelect}
+            @closed=${(e) => e.stopPropagation()}
+          >
+            <ha-list-item .value=${"1"}>Assigned Keys</ha-list-item>
+            <ha-list-item .value=${"2"}>Macro Commands</ha-list-item>
+            <ha-list-item .value=${"3"}>Favorite Commands</ha-list-item>
+          </ha-select>
         </div>
         <!-- Status message -->
         ${showStatusMessage ? html`
@@ -1504,7 +1597,7 @@ class SofabatonDetailCard extends LitElement {
                 const is_partial = is_assigned && !hasActiveActivity;
                 
                 return html`
-                <div class="key-wrapper ${is_partial ? 'partial-enabled' : ''}" style="grid-area: ${k.grid || 'auto'};">
+                <div class="key-wrapper ${is_assigned ? 'assigned-key' : ''} ${is_partial ? 'partial-enabled' : ''}" style="grid-area: ${k.grid || 'auto'};">
                     <ha-icon-button 
                         @click=${(e) => this._sendAssignedKey(keyMatchActivityId, key_info.id, e)}
                         .disabled=${!is_assigned}
@@ -1532,7 +1625,6 @@ class SofabatonDetailCard extends LitElement {
             </div>
         ` : ''}
         
-        ${hasReceivedResponse && assignedKeyIds.length > 0 ? html`
         <div class="remote-layout">
             <!-- Direction keys - cross layout -->
             <div class="dpad-grid">
@@ -1547,7 +1639,7 @@ class SofabatonDetailCard extends LitElement {
                     const is_partial = is_assigned && !hasActiveActivity;
                     
                     return html`
-                    <div class="key-wrapper ${is_partial ? 'partial-enabled' : ''}" style="grid-area: ${k.grid};">
+                    <div class="key-wrapper ${is_assigned ? 'assigned-key' : ''} ${is_partial ? 'partial-enabled' : ''}" style="grid-area: ${k.grid};">
                         <ha-icon-button 
                             @click=${(e) => this._sendAssignedKey(keyMatchActivityId, key_info.id, e)}
                             .disabled=${!is_assigned}
@@ -1579,7 +1671,7 @@ class SofabatonDetailCard extends LitElement {
                     const is_partial = is_assigned && !hasActiveActivity;
                     
                     return html`
-                    <div class="key-wrapper ${is_partial ? 'partial-enabled' : ''}" style="grid-area: ${k.grid};">
+                    <div class="key-wrapper ${is_assigned ? 'assigned-key' : ''} ${is_partial ? 'partial-enabled' : ''}" style="grid-area: ${k.grid};">
                         <ha-icon-button 
                             @click=${(e) => this._sendAssignedKey(keyMatchActivityId, key_info.id, e)}
                             .disabled=${!is_assigned}
@@ -1605,7 +1697,7 @@ class SofabatonDetailCard extends LitElement {
             <!-- Custom keys -->
             ${renderKeyGroup(REMOTE_LAYOUT.customs)}
         </div>
-        ` : hasReceivedResponse ? html`
+        ${hasReceivedResponse && assignedKeyIds.length === 0 ? html`
             <div class="info-message">
                 <ha-icon icon="mdi:information-outline"></ha-icon>
                 <span>No remote control keys available for this activity</span>
@@ -1623,20 +1715,17 @@ class SofabatonDetailCard extends LitElement {
     // Use page 2 request status
     const isRequesting = this._isRequestingPage2;
 
-    if (macroKeys.length === 0) {
-        return html`
+    return html`
+      <div class="command-page">
+        ${macroKeys.length === 0 ? html`
             <div class="loading-message">
                 <ha-icon icon="${isRequesting ? 'mdi:loading' : 'mdi:information-outline'}" 
                          class="${isRequesting ? 'spinning' : ''}"></ha-icon>
                 <p>${isRequesting ? 'Loading macro commands...' : 'No macro commands available for this activity'}</p>
                 ${isRequesting ? html`<p>Please wait while macro commands are being loaded.</p>` : ''}
             </div>
-        `;
-    }
-
-    return html`
-      <div class="macro-grid">
-        ${macroKeys.map(key => html`
+        ` : html`<div class="macro-grid">
+          ${macroKeys.map(key => html`
           <button
             class="macro-button"
             @click=${(e) => this._sendMacroKey(keyMatchActivityId, key.id, e)}
@@ -1644,7 +1733,8 @@ class SofabatonDetailCard extends LitElement {
           >
             ${key.name}
           </button>
-        `)}
+          `)}
+        </div>`}
       </div>
     `;
   }
@@ -1658,20 +1748,17 @@ class SofabatonDetailCard extends LitElement {
     // Use page 3 request status
     const isRequesting = this._isRequestingPage3;
 
-    if (favoriteKeys.length === 0) {
-        return html`
+    return html`
+      <div class="command-page">
+        ${favoriteKeys.length === 0 ? html`
             <div class="loading-message">
                 <ha-icon icon="${isRequesting ? 'mdi:loading' : 'mdi:information-outline'}" 
                          class="${isRequesting ? 'spinning' : ''}"></ha-icon>
                 <p>${isRequesting ? 'Loading favorite commands...' : 'No favorite commands available for this activity'}</p>
                 ${isRequesting ? html`<p>Please wait while favorite commands are being loaded.</p>` : ''}
             </div>
-        `;
-    }
-
-     return html`
-      <div class="favorite-grid">
-        ${favoriteKeys.map(key => html`
+        ` : html`<div class="favorite-grid">
+          ${favoriteKeys.map(key => html`
           <button
             class="favorite-button"
             @click=${(e) => this._sendFavoriteKey(keyMatchActivityId, key.id, key.device_id, e)}
@@ -1679,30 +1766,22 @@ class SofabatonDetailCard extends LitElement {
           >
             ${key.name}
           </button>
-        `)}
+          `)}
+        </div>`}
       </div>
     `;
   }
   
   // Switch page
-  _changePage(direction) {
-    const newPage = this._currentPage + direction;
-    if (newPage >= 1 && newPage <= 3) {
-      this._currentPage = newPage;
-      // Request data for the new page
-      console.log(`📄 Page changed to ${newPage}, requesting data`);
-      this._requestKeysForCurrentPage();
+  _handlePageSelect(e) {
+    const newPage = Number(e.detail?.value ?? e.target.value);
+    if (!Number.isInteger(newPage) || newPage < 1 || newPage > 3 || newPage === this._currentPage) {
+      return;
     }
-  }
 
-  // Get page title
-  _getPageTitle() {
-    switch(this._currentPage) {
-        case 1: return "Assigned Keys";
-        case 2: return "Macro Commands";
-        case 3: return "Favorite Commands";
-        default: return "";
-    }
+    this._currentPage = newPage;
+    console.log(`Page changed to ${newPage}, requesting data`);
+    this._requestKeysForCurrentPage();
   }
 
   // Send assigned key command
@@ -1895,10 +1974,19 @@ function showSofabatonDialog(hass, stateObj, selectedActivityId) {
     card.stateObj = stateObj;
     card.entityId = stateObj.entity_id;  // Set entityId for dynamic state updates
     card.selectedActivityId = selectedActivityId;  // 传递选中的活动ID
+    card.style.display = "block";
+    card.style.boxSizing = "border-box";
+    // ha-dialog gives its body a horizontal padding (24px each side by default),
+    // so the card must never be wider than that content box. Otherwise the
+    // overflowing width is pushed to the right and the whole panel looks offset.
+    // Using width:100% + max-width keeps it perfectly centered on every screen.
+    card.style.width = "100%";
+    card.style.maxWidth = "400px";
+    card.style.minWidth = "0";
+    card.style.margin = "0 auto";
     console.log("🎯 Creating detail card with selectedActivityId:", selectedActivityId);
     console.log("🎯 Creating detail card with entityId:", stateObj.entity_id);
     
-    // Set dialog content
     dialog.appendChild(card);
     
     // Add close button - using more robust method
@@ -1943,9 +2031,15 @@ function showSofabatonDialog(hass, stateObj, selectedActivityId) {
     dialog.appendChild(closeButton);
     
     
-    // Set dialog styles
-    dialog.style.setProperty("--mdc-dialog-min-width", "400px");
-    dialog.style.setProperty("--mdc-dialog-max-width", "90vw");
+    // Set dialog styles.
+    // 448px = 400px card + 2 x 24px ha-dialog content padding, so the card fills the
+    // content box exactly on wide screens. On narrow screens ha-dialog forces the
+    // surface to the full width and the card's width:100% keeps it centered.
+    dialog.style.setProperty("--ha-dialog-width-md", "448px");
+    dialog.style.setProperty("--ha-dialog-max-width", "min(448px, 100vw)");
+    dialog.style.setProperty("--mdc-dialog-min-width", "min(448px, calc(100vw - 32px))");
+    dialog.style.setProperty("--mdc-dialog-max-width", "min(448px, calc(100vw - 32px))");
+    dialog.style.setProperty("--ha-dialog-min-height", "60vh");
     dialog.style.setProperty("--mdc-dialog-min-height", "60vh");
     dialog.style.setProperty("z-index", "9999");
     

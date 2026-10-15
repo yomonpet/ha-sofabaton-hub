@@ -10,7 +10,7 @@
 
 This is a custom integration for Home Assistant that allows you to control your Sofabaton Hub remote control. It provides a beautiful, feature-rich interface with real-time updates via MQTT.
 
-> **✅ Current Version**: **v1.0.6** (2026-10-12) — install/update via HACS.
+> **✅ Current Version**: **v1.0.7** (2026-10-15) — install/update via HACS.
 
 > **⚠️ Device Compatibility**
 >
@@ -553,7 +553,11 @@ A: The Sofabaton Hub uses MQTT for real-time communication. This allows for inst
 
 ### 📋 Version History
 
-**v1.0.6** (Current)
+**v1.0.7** (Current)
+- Check Hub availability every five minutes and report offline after consecutive missed responses
+- Refine main/detail card styling, center detail dialog content, and keep the activity dropdown scrollable
+
+**v1.0.6**
 - Verify broker-side MQTT subscriptions with a retained loopback barrier before requesting initial data, preventing intermittent startup timeouts
 - Start coordinator message handling only after MQTT response subscriptions are confirmed active
 
@@ -673,7 +677,7 @@ This project is licensed under the MIT License.
 
 这是一个 Home Assistant 自定义集成，允许您控制 Sofabaton Hub 万能遥控器。它提供了一个美观、功能丰富的界面，通过 MQTT 实现实时更新。
 
-> **✅ 当前版本**：**v1.0.6**（2026-10-12）— 请通过 HACS 安装/更新。
+> **✅ 当前版本**：**v1.0.7**（2026-10-15）— 请通过 HACS 安装/更新。
 
 > **⚠️ 设备兼容性**
 >
@@ -1208,7 +1212,11 @@ automation:
 
 ### 📋 版本历史
 
-**v1.0.6**（当前版本）
+**v1.0.7**（当前版本）
+- 每 5 分钟检查 Hub 在线状态，连续无响应时报告离线
+- 优化主卡和详情卡样式、对话框内容居中及活动下拉菜单滚动
+
+**v1.0.6**
 - 使用 retained 回环屏障确认 broker 侧 MQTT 订阅已生效后再请求初始数据，避免间歇性启动超时
 - 仅在 MQTT 响应订阅确认生效后启动协调器消息处理
 

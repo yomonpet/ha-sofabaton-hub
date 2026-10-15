@@ -92,10 +92,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from homeassistant.components import frontend  # pylint: disable=import-outside-toplevel
 
         # Register main card and detail card as ES6 modules first
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js?v=offline-status-1")
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js?v=offline-status-1")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js?v=ui-refresh-12")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js?v=ui-refresh-12")
         # Then register the cards.js for Lovelace picker
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js?v=offline-status-1")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js?v=ui-refresh-12")
 
         _LOGGER.info("Successfully registered Sofabaton Hub frontend cards")
     except Exception as err:  # pylint: disable=broad-except

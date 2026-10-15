@@ -1,6 +1,7 @@
 """Test the Sofabaton Hub coordinator."""
 from __future__ import annotations
 
+from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -177,6 +178,39 @@ async def test_coordinator_request_basic_data(
 
     # Verify API client was called to request activity list
     mock_api_client.async_publish_message.assert_called()
+
+
+async def test_manual_basic_data_request_resets_health_check_timer(
+    hass: HomeAssistant,
+    mock_config_entry,
+    mock_api_client,
+) -> None:
+    """A manual data request postpones the next health check by five minutes."""
+    coordinator = SofabatonHubDataUpdateCoordinator(
+        hass=hass,
+        entry=mock_config_entry,
+        api_client=mock_api_client,
+    )
+    coordinator._request_basic_data_step = AsyncMock()
+
+    def fake_async_call_later(_hass, _delay, _callback):
+        return MagicMock()
+
+    with patch(
+        "custom_components.sofabaton_hub.coordinator.async_call_later",
+        side_effect=fake_async_call_later,
+    ) as schedule_timer:
+        coordinator.start_health_monitor()
+        first_timer = coordinator._health_check_unsubscribe
+
+        await coordinator.async_request_basic_data()
+
+        first_timer.assert_called_once()
+        assert schedule_timer.call_count == 2
+        assert schedule_timer.call_args.args[1] == timedelta(seconds=300)
+
+        coordinator._cleanup_basic_data_request()
+        coordinator.stop_health_monitor()
 
 
 async def test_coordinator_clear_requesting_keys_flag(

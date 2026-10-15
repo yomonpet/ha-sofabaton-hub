@@ -512,26 +512,63 @@ class SofabatonMainCard extends LitElement {
   // Define card styles
   static get styles() {
     return css`
+      :host {
+        display: block;
+        min-width: 0;
+      }
+      ha-card {
+        overflow: visible;
+        color: #d9fbff;
+        background-image:
+          linear-gradient(rgba(105, 220, 216, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(105, 220, 216, 0.025) 1px, transparent 1px),
+          linear-gradient(135deg, #142329 0%, #0b1118 54%, #1a121e 100%);
+        background-size: 28px 28px, 28px 28px, auto;
+        border: 1px solid rgba(116, 210, 213, 0.22);
+        border-radius: 20px;
+        box-shadow:
+          0 14px 36px rgba(0, 0, 0, 0.42),
+          inset 0 1px 0 rgba(210, 255, 255, 0.06),
+          inset 0 0 28px rgba(0, 229, 255, 0.035);
+      }
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 392px;
+        margin-inline: auto;
         padding: 16px;
+        border-bottom: 1px solid rgba(116, 210, 213, 0.14);
       }
       .name {
         display: flex;
         align-items: center;
-        font-size: 1.2rem;
+        min-width: 0;
+        font-size: 1.05rem;
         font-weight: 500;
       }
       .name ha-icon {
         margin-right: 8px;
-        color: var(--state-icon-color);
+        color: #69dad8;
+        filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.32));
       }
       .header-buttons {
         display: flex;
         align-items: center;
         gap: 4px;
+      }
+      .header-buttons ha-icon-button {
+        color: #69dad8;
+        --mdc-icon-button-ink-color: #69dad8;
+      }
+      .card-content {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 392px;
+        margin-inline: auto;
+        padding: 12px 16px 16px;
       }
       .refresh-button ha-icon {
         transition: transform 0.3s ease;
@@ -547,34 +584,49 @@ class SofabatonMainCard extends LitElement {
         display: flex;
         align-items: center;
         gap: 8px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 360px;
+        min-height: 48px;
         padding: 12px 16px;
-        background: rgba(33, 150, 243, 0.1);
-        border: 1px solid rgba(33, 150, 243, 0.3);
-        border-radius: 6px;
-        margin: 8px 16px;
+        color: #d9fbff;
+        background: linear-gradient(110deg, rgba(12, 34, 42, 0.96), rgba(19, 20, 32, 0.96));
+        border: 1px solid rgba(105, 220, 216, 0.3);
+        border-radius: 8px;
+        margin: 0 auto 12px;
         font-size: 14px;
-        opacity: 0.8;
+        box-shadow: inset 0 0 16px rgba(0, 229, 255, 0.045);
       }
       .loading-status ha-icon {
-        color: var(--primary-color);
+        flex: 0 0 auto;
+        color: #69dad8;
       }
       .offline-status {
         display: flex;
         align-items: center;
         gap: 8px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 360px;
+        min-height: 48px;
         padding: 12px 16px;
-        color: var(--error-color);
-        background: color-mix(in srgb, var(--error-color) 10%, transparent);
-        border: 1px solid color-mix(in srgb, var(--error-color) 35%, transparent);
-        border-radius: 6px;
-        margin: 8px 16px;
+        color: #ffb7bd;
+        background: linear-gradient(110deg, rgba(48, 20, 28, 0.88), rgba(25, 20, 30, 0.94));
+        border: 1px solid rgba(255, 107, 117, 0.38);
+        border-radius: 8px;
+        margin: 0 auto 12px;
         font-size: 14px;
+      }
+      .offline-status ha-icon {
+        flex: 0 0 auto;
+        color: #ff6b75;
       }
       .spinning {
         animation: spin 1s linear infinite;
       }
       .section {
-        padding: 8px 16px;
+        min-width: 0;
+        padding: 8px 0;
       }
       .section-header {
         display: flex;
@@ -582,22 +634,46 @@ class SofabatonMainCard extends LitElement {
         margin-bottom: 8px;
       }
       .section-icon {
-        color: var(--secondary-text-color);
+        color: #69dad8;
       }
       .section-title {
         font-weight: 500;
         margin-left: 8px;
+        color: #d9fbff;
       }
       ha-select {
         width: 100%;
+        max-width: 360px;
         margin-top: 8px;
+        box-sizing: border-box;
+        color: #d9fbff;
+        --mdc-theme-primary: #69dad8;
+        --mdc-select-fill-color: rgba(8, 16, 21, 0.94);
+        --mdc-select-ink-color: #d9fbff;
+        --mdc-select-label-ink-color: #91aaad;
+        --mdc-select-dropdown-icon-color: #69dad8;
+        --mdc-select-idle-line-color: rgba(105, 220, 216, 0.28);
+        --mdc-select-hover-line-color: rgba(105, 220, 216, 0.72);
+        --mdc-select-focused-line-color: #69dad8;
       }
       .activity-control {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px 0;
+        gap: 12px;
+        padding: 10px 0;
         font-size: 1rem;
+        color: #d9fbff;
+        border-bottom: 1px solid rgba(116, 210, 213, 0.14);
+      }
+      .activity-control span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .activity-control ha-switch {
+        flex: 0 0 auto;
+        --switch-checked-button-color: #0b1118;
+        --switch-checked-track-color: #69dad8;
       }
     `;
   }

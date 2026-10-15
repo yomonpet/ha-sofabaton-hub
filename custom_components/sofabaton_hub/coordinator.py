@@ -10,7 +10,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .api import SofabatonHubApiClient
@@ -38,8 +38,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-_HEALTH_CHECK_INTERVAL = timedelta(seconds=120)
-_HEALTH_CHECK_TIMEOUT = 10
+_HEALTH_CHECK_INTERVAL = timedelta(seconds=300)
+_HEALTH_CHECK_TIMEOUT = 15
 _HEALTH_CHECK_FAILURE_LIMIT = 2
 
 class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
@@ -85,6 +85,7 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         self._health_check_response: asyncio.Event | None = None
         self._health_check_task: asyncio.Task | None = None
         self._health_check_unsubscribe = None
+        self._health_monitor_running = False
 
         # Set MQTT message callback
         self.api_client.set_on_message_callback(self._handle_mqtt_message)
@@ -131,18 +132,16 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         return self._hub_online
 
     def start_health_monitor(self) -> None:
-        """Start periodic Hub reachability checks."""
-        if self._health_check_unsubscribe is not None:
+        """Start Hub reachability checks."""
+        if self._health_monitor_running:
             return
 
-        self._health_check_unsubscribe = async_track_time_interval(
-            self.hass,
-            self._schedule_health_check,
-            _HEALTH_CHECK_INTERVAL,
-        )
+        self._health_monitor_running = True
+        self._schedule_next_health_check()
 
     def stop_health_monitor(self) -> None:
         """Stop periodic Hub reachability checks and cancel an active probe."""
+        self._health_monitor_running = False
         if self._health_check_unsubscribe is not None:
             self._health_check_unsubscribe()
             self._health_check_unsubscribe = None
@@ -151,10 +150,31 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
             self._health_check_task.cancel()
             self._health_check_task = None
 
+    def _schedule_next_health_check(self, reset: bool = False) -> None:
+        """Schedule the next probe, optionally restarting the health timer."""
+        if not self._health_monitor_running:
+            return
+
+        if reset and self._health_check_unsubscribe is not None:
+            self._health_check_unsubscribe()
+            self._health_check_unsubscribe = None
+
+        if self._health_check_unsubscribe is None:
+            self._health_check_unsubscribe = async_call_later(
+                self.hass,
+                _HEALTH_CHECK_INTERVAL,
+                self._schedule_health_check,
+            )
+
     @callback
     def _schedule_health_check(self, _now: datetime | None = None) -> None:
         """Schedule a probe unless the previous probe is still running."""
+        self._health_check_unsubscribe = None
+        if not self._health_monitor_running:
+            return
+
         if self._health_check_task is not None and not self._health_check_task.done():
+            self._schedule_next_health_check()
             return
 
         self._health_check_task = self.hass.async_create_task(
@@ -167,7 +187,7 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         self._health_check_response = response
 
         try:
-            await self.async_request_basic_data()
+            await self.async_request_basic_data(reset_health_timer=False)
             await asyncio.wait_for(response.wait(), timeout=_HEALTH_CHECK_TIMEOUT)
         except asyncio.TimeoutError:
             self._record_health_check_failure("no activity-list response")
@@ -178,6 +198,9 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         finally:
             if self._health_check_response is response:
                 self._health_check_response = None
+            if self._health_check_task is asyncio.current_task():
+                self._health_check_task = None
+            self._schedule_next_health_check()
 
     def _record_health_check_success(self) -> None:
         """Mark the Hub online after receiving one of its MQTT messages."""
@@ -264,7 +287,7 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     # Basic data sequential request
-    async def async_request_basic_data(self) -> None:
+    async def async_request_basic_data(self, *, reset_health_timer: bool = True) -> None:
         """Request basic data sequentially (activity_list → device_list).
 
         Note: DEVICE_DISABLED - currently only requests activity_list
@@ -272,6 +295,9 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         This method will skip the request if one is already in progress to avoid
         duplicate MQTT requests and potential data race conditions.
         """
+        if reset_health_timer:
+            self._schedule_next_health_check(reset=True)
+
         # Only check if request is already in progress
         # Skip duplicate requests to avoid MQTT message conflicts
         if self._basic_data_request_state:
