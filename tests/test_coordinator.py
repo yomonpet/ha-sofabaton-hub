@@ -286,3 +286,23 @@ async def test_coordinator_activity_list_resets_current_id(
     # current_activity_id should be reset to None
     assert coordinator.data["current_activity_id"] is None
 
+
+async def test_empty_activity_list_marks_list_as_loaded(
+    hass: HomeAssistant,
+    mock_config_entry,
+    mock_api_client,
+) -> None:
+    """An empty response is still a completed activity-list load."""
+    coordinator = SofabatonHubDataUpdateCoordinator(
+        hass=hass,
+        entry=mock_config_entry,
+        api_client=mock_api_client,
+    )
+
+    assert coordinator.activity_list_loaded is False
+
+    coordinator._handle_activity_list({"data": []})
+
+    assert coordinator.activity_list_loaded is True
+    assert coordinator.data["activities"] == {}
+

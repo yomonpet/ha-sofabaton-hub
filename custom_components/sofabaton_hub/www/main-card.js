@@ -257,10 +257,11 @@ class SofabatonMainCard extends LitElement {
     // Check data loading status
     const hasActivities = Object.keys(activities).length > 0;
     const isHubOffline = attributes.hub_online === false || stateObj.state === 'unavailable';
+    const activityListLoaded = attributes.activity_list_loaded === true;
     // DEVICE_DISABLED: Temporarily disable device functionality - uncomment below line when restoring并启用设备检查
     // const hasDevices = Object.keys(devices).length > 0;
     // const isDataLoading = !hasActivities || !hasDevices;
-    const isDataLoading = !hasActivities && !isHubOffline;
+    const isDataLoading = !hasActivities && !activityListLoaded && !isHubOffline;
     
     // Find currently selected activity object
     const selectedActivity = activities.find(a => a.id === this._selectedActivityId);

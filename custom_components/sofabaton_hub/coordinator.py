@@ -81,6 +81,7 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
 
         # Hub connectivity monitor based on activity-list request/response.
         self._hub_online: bool | None = None
+        self._activity_list_loaded = False
         self._health_check_failures = 0
         self._health_check_response: asyncio.Event | None = None
         self._health_check_task: asyncio.Task | None = None
@@ -130,6 +131,11 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
     def hub_online(self) -> bool | None:
         """Return the last known Hub connectivity state."""
         return self._hub_online
+
+    @property
+    def activity_list_loaded(self) -> bool:
+        """Return whether an activity-list response has been received."""
+        return self._activity_list_loaded
 
     def start_health_monitor(self) -> None:
         """Start Hub reachability checks."""
@@ -712,6 +718,7 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
 
         # Ensure self.data is initialized
         self._ensure_data_initialized()
+        self._activity_list_loaded = True
 
         # Check if key request is in progress
         # If yes, we need to be careful not to clear keys data

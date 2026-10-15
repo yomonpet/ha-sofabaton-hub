@@ -107,6 +107,7 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
             return {
                 "activities": [],
                 "hub_online": self.coordinator.hub_online,
+                "activity_list_loaded": self.coordinator.activity_list_loaded,
                 # DEVICE_DISABLED: Device functionality temporarily disabled
                 # Uncomment below when re-enabling device support
                 # "devices": [],
@@ -134,6 +135,7 @@ class SofabatonHubRemote(CoordinatorEntity[SofabatonHubDataUpdateCoordinator], R
         result = {
             "activities": list(data.get("activities", {}).values()),
             "hub_online": self.coordinator.hub_online,
+            "activity_list_loaded": self.coordinator.activity_list_loaded,
             # DEVICE_DISABLED: Device functionality temporarily disabled
             # Uncomment below when re-enabling device support
             # "devices": list(data.get("devices", {}).values()),
