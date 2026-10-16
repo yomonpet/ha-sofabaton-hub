@@ -10,7 +10,7 @@
 
 This is a custom integration for Home Assistant that allows you to control your Sofabaton Hub remote control. It provides a beautiful, feature-rich interface with real-time updates via MQTT.
 
-> **✅ Current Version**: **v1.0.7** (2026-10-15) — install/update via HACS.
+> **✅ Current Version**: **v1.0.8** (2026-10-16) — install/update via HACS.
 
 > **⚠️ Device Compatibility**
 >
@@ -553,7 +553,12 @@ A: The Sofabaton Hub uses MQTT for real-time communication. This allows for inst
 
 ### 📋 Version History
 
-**v1.0.7** (Current)
+**v1.0.8** (Current)
+- Serialise all Hub traffic through one session, so key requests, activity commands and health checks never overlap
+- Detect a Hub that was just powered on within seconds, and stop broker-cached (retained) messages from looking like a live Hub
+- Verify the MQTT subscription path at startup and after re-subscribing, and report an unusable broker link instead of half-starting
+
+**v1.0.7**
 - Check Hub availability every five minutes and report offline after consecutive missed responses
 - Refine main/detail card styling, center detail dialog content, and keep the activity dropdown scrollable
 
@@ -677,7 +682,7 @@ This project is licensed under the MIT License.
 
 这是一个 Home Assistant 自定义集成，允许您控制 Sofabaton Hub 万能遥控器。它提供了一个美观、功能丰富的界面，通过 MQTT 实现实时更新。
 
-> **✅ 当前版本**：**v1.0.7**（2026-10-15）— 请通过 HACS 安装/更新。
+> **✅ 当前版本**：**v1.0.8**（2026-10-16）— 请通过 HACS 安装/更新。
 
 > **⚠️ 设备兼容性**
 >
@@ -1212,7 +1217,12 @@ automation:
 
 ### 📋 版本历史
 
-**v1.0.7**（当前版本）
+**v1.0.8**（当前版本）
+- 所有 Hub 流量经同一会话串行，按键请求、活动命令与健康检查不再互相抢占资源
+- 刚上电的 Hub 可在数秒内被识别；broker 缓存的 retained 消息不再被误判为 Hub 在线
+- 启动时及重建订阅后验证 MQTT 订阅链路，链路不可用时明确报错而不是半启动
+
+**v1.0.7**
 - 每 5 分钟检查 Hub 在线状态，连续无响应时报告离线
 - 优化主卡和详情卡样式、对话框内容居中及活动下拉菜单滚动
 

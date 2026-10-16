@@ -248,7 +248,7 @@ class SofabatonActivitySwitch(CoordinatorEntity, SwitchEntity):
         )
 
         try:
-            await self.coordinator.api_client.async_start_activity(self._activity_id)
+            await self.coordinator.async_start_activity(self._activity_id)
             _LOGGER.info("Successfully sent start command for activity %s", self._activity_id)
 
             # Request basic data to update activity states
@@ -273,7 +273,7 @@ class SofabatonActivitySwitch(CoordinatorEntity, SwitchEntity):
         )
 
         try:
-            await self.coordinator.api_client.async_stop_activity(self._activity_id)
+            await self.coordinator.async_stop_activity(self._activity_id)
             _LOGGER.info("Successfully sent stop command for activity %s", self._activity_id)
 
             # Request basic data to update activity states

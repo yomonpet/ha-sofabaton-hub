@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-10-16
+
+### Changed
+- Serialise every Hub exchange through a single session: key requests, activity commands and health checks can no longer overlap on the single-threaded Hub, and a settle delay follows each exchange.
+- Probe the Hub quickly while its state is unknown or unconfirmed, and keep probing quickly for two minutes after an explicit refresh, so a Hub that was just powered on is reported online within seconds instead of after a full interval.
+- Verify broker-side MQTT subscriptions at startup and again after re-subscribing; setup defers with a clear error when the broker link is unusable.
+
+### Fixed
+- Ignore broker-retained (cached) messages when deciding whether the Hub is reachable, so a Hub that was power cycled no longer looks online.
+- Count a live message as proof of reachability even when its payload is dropped as a duplicate, so a Hub that comes back is picked up without reloading the integration.
+- Report the Hub offline after a single unanswered manual refresh, and rebuild the MQTT subscriptions when that check fails.
+- Stop the main card from requesting Hub data on every mount; it required device data that is disabled.
+
 ## [1.0.7] - 2026-10-15
 
 ### Changed

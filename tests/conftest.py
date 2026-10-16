@@ -70,7 +70,13 @@ def mock_api_client():
     with patch("custom_components.sofabaton_hub.api.SofabatonHubAPI") as mock_api:
         client = mock_api.return_value
         client.async_subscribe_to_topics = AsyncMock(return_value=None)
+        client.async_resubscribe_to_topics = AsyncMock(return_value=None)
         client.async_publish_message = AsyncMock(return_value=None)
+        client.async_request_activity_list = AsyncMock(return_value=None)
+        client.async_request_assigned_keys = AsyncMock(return_value=None)
+        client.async_request_macro_keys = AsyncMock(return_value=None)
+        client.async_request_favorite_keys = AsyncMock(return_value=None)
+        client.async_control_activity_state = AsyncMock(return_value=None)
         client.set_on_message_callback = MagicMock()
         yield client
 

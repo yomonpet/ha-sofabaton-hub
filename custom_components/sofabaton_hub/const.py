@@ -45,6 +45,13 @@ TOPIC_ACTIVITY_MACRO_LIST = "activity/{mac}/macro_keys_list"
 TOPIC_ACTIVITY_ASSIGNED_KEY_CONTROL = "activity/{mac}/keys_control"
 TOPIC_ACTIVITY_MACRO_KEY_CONTROL = "activity/{mac}/macro_keys_control"
 
+# Startup-only topic used to verify broker-side MQTT subscriptions.
+# It stays inside the Hub's own namespace on purpose: that namespace is proven
+# publishable with the configured broker credentials, whereas a private one can
+# be rejected by broker ACLs. The Hub never publishes on this name, so it only
+# ever carries our own loopback message.
+TOPIC_SUBSCRIPTION_BARRIER = "activity/{mac}/ha_link_check"
+
 # Device-related topics
 TOPIC_DEVICE_LIST_REQUEST = "device/{mac}/list_request"
 TOPIC_DEVICE_LIST_RESPONSE = "device/{mac}/list"

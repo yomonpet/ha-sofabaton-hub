@@ -90,10 +90,13 @@ class SofabatonMainCard extends LitElement {
     
     const attributes = stateObj.attributes;
     const activities = attributes.activities || {};
-    const devices = attributes.devices || {};
-    
-    // If no activity or device data, or data is outdated, refresh
-    const needRefresh = Object.keys(activities).length === 0 || Object.keys(devices).length === 0;
+    // DEVICE_DISABLED: device data is not exposed by the entity, so requiring
+    // it here made needRefresh permanently true and re-requested the Hub on
+    // every mount. Restore the device check when device support comes back.
+    // const devices = attributes.devices || {};
+    // const needRefresh = Object.keys(activities).length === 0 ||
+    //                     Object.keys(devices).length === 0;
+    const needRefresh = Object.keys(activities).length === 0;
     
     if (needRefresh) {
       console.log("Main card: Requesting basic data refresh");

@@ -38,8 +38,8 @@ function loadCardModules() {
   console.log("Sofabaton Hub: Loading card modules...");
 
   Promise.all([
-    loadModuleScript('/sofabaton_hub/www/main-card.js?v=ui-refresh-13'),
-    loadModuleScript('/sofabaton_hub/www/detail-card.js?v=ui-refresh-13')
+    loadModuleScript('/sofabaton_hub/www/main-card.js?v=ui-refresh-14'),
+    loadModuleScript('/sofabaton_hub/www/detail-card.js?v=ui-refresh-14')
   ])
   .then(() => {
     console.log("Sofabaton Hub: All card modules loaded successfully");

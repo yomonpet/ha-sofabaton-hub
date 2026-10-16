@@ -5,6 +5,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
@@ -61,6 +62,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Subscribe before requesting data so the Hub's immediate response is not missed.
     await api_client.async_subscribe_to_topics()
 
+    # Make sure the broker really activated those subscriptions before any
+    # request relies on a reply. Only the HA <-> broker link is verified here,
+    # so an offline Hub still allows the integration to load.
+    #
+    # This is deliberately fatal: the check only fails when the broker link is
+    # genuinely unusable, in which case every request would silently go nowhere.
+    # Reporting it lets Home Assistant flag the entry and retry, instead of
+    # running a half working integration.
+    if not await api_client.async_verify_subscriptions():
+        await api_client.async_unsubscribe_from_topics()
+        raise ConfigEntryNotReady(
+            f"MQTT broker link is not usable yet for {api_client.mac}"
+        )
+
     # First data refresh
     await coordinator.async_config_entry_first_refresh()
 
@@ -92,10 +107,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from homeassistant.components import frontend  # pylint: disable=import-outside-toplevel
 
         # Register main card and detail card as ES6 modules first
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js?v=ui-refresh-13")
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js?v=ui-refresh-13")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/main-card.js?v=ui-refresh-14")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/detail-card.js?v=ui-refresh-14")
         # Then register the cards.js for Lovelace picker
-        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js?v=ui-refresh-13")
+        frontend.add_extra_js_url(hass, f"/{DOMAIN}/www/cards.js?v=ui-refresh-14")
 
         _LOGGER.info("Successfully registered Sofabaton Hub frontend cards")
     except Exception as err:  # pylint: disable=broad-except
