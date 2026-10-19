@@ -209,9 +209,18 @@ class SofabatonHubDataUpdateCoordinator(DataUpdateCoordinator):
         UI therefore cannot postpone (and effectively starve) the health
         monitor, which previously left a Hub that came back online reported as
         offline until the integration was reloaded.
+
+        The reply evidence is consumed here: a message only proves the Hub was
+        reachable during the interval that just ended, so the next interval is
+        probed again unless new traffic arrives.
         """
         if not self._health_monitor_running:
             return
+
+        # Without this reset the flag stays True forever after the first Hub
+        # message, every subsequent probe is skipped in _schedule_health_check()
+        # and an offline Hub is never reported as offline.
+        self._hub_replied_since_probe = False
 
         if self._health_check_unsubscribe is None:
             self._health_check_unsubscribe = async_call_later(

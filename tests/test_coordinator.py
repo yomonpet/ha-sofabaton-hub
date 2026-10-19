@@ -264,6 +264,54 @@ async def test_health_check_probes_quickly_while_hub_state_is_unknown(
         coordinator.stop_health_monitor()
 
 
+async def test_reply_evidence_is_consumed_each_interval(
+    hass: HomeAssistant,
+    mock_config_entry,
+    mock_api_client,
+) -> None:
+    """A Hub reply must not permanently disable the health check.
+
+    The reply flag only proves reachability for the interval in which the
+    message arrived. If it is never cleared, every later probe is skipped and a
+    Hub that goes silent is never reported as offline.
+    """
+    coordinator = SofabatonHubDataUpdateCoordinator(
+        hass=hass,
+        entry=mock_config_entry,
+        api_client=mock_api_client,
+    )
+    coordinator._health_monitor_running = True
+
+    def fake_async_call_later(_hass, _delay, _callback):
+        return MagicMock()
+
+    with patch(
+        "custom_components.sofabaton_hub.coordinator.async_call_later",
+        side_effect=fake_async_call_later,
+    ), patch.object(coordinator, "_async_check_hub", AsyncMock()) as probe:
+        # A live reply arrives and marks the Hub reachable.
+        coordinator._handle_mqtt_message(
+            coordinator._get_topic(TOPIC_ACTIVITY_LIST_RESPONSE),
+            {"data": []},
+        )
+        assert coordinator.hub_online is True
+        assert coordinator._hub_replied_since_probe is True
+
+        # The next scheduled check sees the reply and skips its probe.
+        coordinator._health_check_unsubscribe = None
+        coordinator._schedule_health_check()
+        probe.assert_not_called()
+        assert coordinator._hub_replied_since_probe is False
+
+        # With no new traffic, the following check must actually probe.
+        coordinator._health_check_unsubscribe = None
+        coordinator._schedule_health_check()
+        await hass.async_block_till_done()
+        probe.assert_called_once()
+
+    coordinator.stop_health_monitor()
+
+
 async def test_failed_probe_is_confirmed_without_a_full_interval(
     hass: HomeAssistant,
     mock_config_entry,
